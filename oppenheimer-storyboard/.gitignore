@@ -6,3 +6,4 @@ film/__pycache__/
 graphics/__pycache__/
 renders/*.log
 film/archive/fetch.log
+renders/oppenheimer_film*.mp4
