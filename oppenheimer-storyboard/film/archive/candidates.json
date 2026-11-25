@@ -1,0 +1,60 @@
+{
+ "groves_portrait": [
+  {
+   "title": "File:LTG Leslie R. Groves (cropped).jpg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/LTG_Leslie_R._Groves_%28cropped%29.jpg/1920px-LTG_Leslie_R._Groves_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/LTG_Leslie_R._Groves_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "U.S. Army",
+   "w": 2205,
+   "h": 2803
+  },
+  {
+   "title": "File:LTG Leslie R. Groves.jpg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/LTG_Leslie_R._Groves.jpg/1920px-LTG_Leslie_R._Groves.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/15/LTG_Leslie_R._Groves.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "U.S. Army",
+   "w": 2341,
+   "h": 2859
+  },
+  {
+   "title": "File:Groves portrait 1948 - USACE-p15141coll5-4120.jpeg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Groves_portrait_1948_-_USACE-p15141coll5-4120.jpeg/1920px-Groves_portrait_1948_-_USACE-p15141coll5-4120.jpeg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/87/Groves_portrait_1948_-_USACE-p15141coll5-4120.jpeg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "United States. Army",
+   "w": 4948,
+   "h": 6028
+  }
+ ],
+ "trinity_fireball": [
+  {
+   "title": "File:Trinity Test Fireball 16ms.jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/7/78/Trinity_Test_Fireball_16ms.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/7/78/Trinity_Test_Fireball_16ms.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "<a href=\"https://en.wikipedia.org/wiki/Berlyn_Brixner\" class=\"extiw\" title=\"en:Berlyn Brixner\">Berlyn Brixner</a> / Los Alamos National Laboratory",
+   "w": 1483,
+   "h": 1000
+  },
+  {
+   "title": "File:Trinity Test Fireball 53ms.jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Trinity_Test_Fireball_53ms.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/ee/Trinity_Test_Fireball_53ms.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "Photo courtesy of National Nuclear Security Administration / Nevada Site Office",
+   "w": 800,
+   "h": 638
+  },
+  {
+   "title": "File:Trinity Test - the early fireball at 6 milliseconds (10537699766).jpg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/Trinity_Test_-_the_early_fireball_at_6_milliseconds_%2810537699766%29.jpg/1920px-Trinity_Test_-_the_early_fireball_at_6_milliseconds_%2810537699766%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Trinity_Test_-_the_early_fireball_at_6_milliseconds_%2810537699766%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/37916456@N02\">ENERGY.GOV</a>",
+   "w": 2949,
+   "h": 2193
+  }
+ ]
+}

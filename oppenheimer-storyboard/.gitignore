@@ -1,2 +1,6 @@
 __pycache__/
 renders/*.png
+renders/chk_*.png
+renders/parts/
+film/__pycache__/
+graphics/__pycache__/

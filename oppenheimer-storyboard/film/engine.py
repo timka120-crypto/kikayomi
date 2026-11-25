@@ -69,7 +69,10 @@ _TF = {}
 def face(name):
     files = {"reg": "IBMPlexSans_400Regular.ttf", "med": "IBMPlexSans_500Medium.ttf",
              "semi": "IBMPlexSans_600SemiBold.ttf", "mono": "IBMPlexMono_400Regular.ttf",
-             "monom": "IBMPlexMono_500Medium.ttf"}
+             "monom": "IBMPlexMono_500Medium.ttf", "news": "OldStandardTT_400Regular.ttf",
+             "newsb": "OldStandardTT_700Bold.ttf", "newsi": "OldStandardTT_400Regular_Italic.ttf",
+             "type": "SpecialElite_400Regular.ttf", "frak": "UnifrakturMaguntia_400Regular.ttf",
+             "serif": "LibreCaslonText_400Regular.ttf", "serifb": "LibreCaslonText_700Bold.ttf"}
     if name not in _TF:
         _TF[name] = skia.Typeface.MakeFromFile(str(ASSETS / files[name]))
     return _TF[name]
@@ -80,16 +83,37 @@ def text(canvas, s, x, y, size, fc="med", color=(230, 226, 216), alpha=1.0, trac
     font.setSubpixel(True)
     font.setEdging(skia.Font.Edging.kAntiAlias)
     paint = skia.Paint(AntiAlias=True, Color=col(color, alpha))
-    ws = [font.measureText(ch) for ch in s]
+    fonts = [font if font.unicharToGlyph(ord(ch)) or ch == " " else _fallback(ch, size, fc) for ch in s]
+    ws = [f.measureText(ch) for f, ch in zip(fonts, s)]
     total = sum(ws) + track * size * max(0, len(s) - 1)
     if align == "center":
         x -= total / 2
     elif align == "right":
         x -= total
-    for ch, w in zip(s, ws):
-        canvas.drawString(ch, x, y, font, paint)
+    for ch, w, f in zip(s, ws, fonts):
+        canvas.drawString(ch, x, y, f, paint)
         x += w + track * size
     return total
+
+
+_FB = {}
+
+
+def _fallback(ch, size, fc):
+    key = ord(ch)
+    if key not in _FB:
+        mgr = skia.FontMgr.RefDefault()
+        tf = None
+        for fam in ("DejaVu Sans", "Noto Sans Math", "Noto Sans", "FreeSerif", None):
+            tf = mgr.matchFamilyStyleCharacter(fam, skia.FontStyle(), [], key)
+            if tf is not None:
+                break
+        _FB[key] = tf
+    tf = _FB[key]
+    f = skia.Font(tf if tf is not None else face(fc), size)
+    f.setSubpixel(True)
+    f.setEdging(skia.Font.Edging.kAntiAlias)
+    return f
 
 
 # ------------------------------------------------------------------ camera
@@ -165,6 +189,9 @@ class Look:
     nose: float = 1.0
     moustache: bool = False
     cap_military: bool = False
+    skirt: bool = False
+    hair_long: bool = False
+    coat_long: bool = False
 
 
 OPPENHEIMER_1944 = Look()
@@ -238,6 +265,7 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
     sh = (hip[0] + math.sin(lean) * 0.55, hip[1] - math.cos(lean) * 0.55)
     neck = (sh[0] + math.sin(lean) * 0.07, sh[1] - math.cos(lean) * 0.07)
     leg_w, arm_w = 0.105 * (0.85 + 0.15 * b), 0.085 * (0.85 + 0.15 * b)
+    tw = 0.17 * b
 
     def leg(hip_a, knee, color, back):
         p0 = (hip[0] + (-0.02 if back else 0.02), hip[1])
@@ -267,7 +295,7 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
 
     # back limbs (darker)
     dark = 0.22
-    leg(pose.hip_l, pose.knee_l, mix(C(L.suit_dark), (0, 0, 0), dark), True)
+    leg(pose.hip_l, pose.knee_l, mix(C(L.suit_dark if not L.skirt else L.skin), (0, 0, 0), dark), True)
     arm(pose.sh_l, pose.el_l, mix(C(L.suit_dark), (0, 0, 0), dark), True)
 
     # torso: jacket
@@ -283,7 +311,17 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
         canvas.drawPath(jacket, P(c=col(light, rim * 0.5), stroke=0.012))
 
     # front leg & arm
-    leg(pose.hip_r, pose.knee_r, C(L.suit), False)
+    leg(pose.hip_r, pose.knee_r, C(L.suit if not L.skirt else L.skin), False)
+    if L.skirt or L.coat_long:
+        sk = C(L.suit)
+        seated = pose.hip_r > 60
+        if seated:
+            canvas.drawPath(poly([(hip[0] - tw, hip[1] - 0.02), (hip[0] + 0.5, hip[1] - 0.04), (hip[0] + 0.52, hip[1] + 0.1),
+                                  (hip[0] - tw, hip[1] + 0.12)]), P(c=col(sk)))
+        else:
+            sw = 0.04 * math.sin(math.radians(pose.hip_r - pose.hip_l))
+            canvas.drawPath(poly([(hip[0] - tw, hip[1] + 0.02), (hip[0] + tw, hip[1] + 0.02),
+                                  (hip[0] + tw * 1.5 + sw, hip[1] + 0.55), (hip[0] - tw * 1.45 + sw, hip[1] + 0.55)]), P(c=col(sk)))
 
     # head
     hl = math.radians(pose.head)
@@ -305,6 +343,9 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
     # hair
     canvas.drawPath(poly([(-0.088, -0.02), (-0.075, -0.1), (0.0, -0.13), (0.07, -0.105), (0.08, -0.07),
                           (0.02, -0.08), (-0.04, -0.05), (-0.06, 0.0)]), P(c=col(C(L.hair))))
+    if L.hair_long:
+        canvas.drawPath(poly([(-0.095, -0.06), (-0.07, -0.12), (0.02, -0.135), (0.08, -0.1), (0.09, -0.06),
+                              (0.03, -0.08), (-0.02, -0.04), (-0.05, 0.06), (-0.11, 0.07), (-0.12, 0.0)]), P(c=col(C(L.hair))))
     if L.cap_military:
         canvas.drawPath(poly([(-0.09, -0.08), (0.08, -0.1), (0.1, -0.15), (-0.06, -0.17)]), P(c=col(C(L.suit_dark))))
         canvas.drawPath(poly([(0.06, -0.09), (0.16, -0.085), (0.15, -0.075), (0.06, -0.075)]), P(c=col(C((30, 28, 24)))))
