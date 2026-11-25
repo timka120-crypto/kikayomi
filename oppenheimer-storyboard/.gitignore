@@ -4,3 +4,4 @@ renders/chk_*.png
 renders/parts/
 film/__pycache__/
 graphics/__pycache__/
+renders/*.log
