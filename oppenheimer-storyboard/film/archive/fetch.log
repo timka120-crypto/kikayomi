@@ -1,2 +1,5 @@
 ok groves_portrait 3
 ok trinity_fireball 3
+ok trinity_color 3
+ok trinity_gadget 1
+fail trinity_groundzero

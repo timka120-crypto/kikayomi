@@ -56,5 +56,45 @@
    "w": 2949,
    "h": 2193
   }
+ ],
+ "trinity_color": [
+  {
+   "title": "File:Trinity shot color (cropped).jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/1/13/Trinity_shot_color_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/1/13/Trinity_shot_color_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "<a href=\"https://en.wikipedia.org/wiki/Jack_Aeby\" class=\"extiw\" title=\"w:Jack Aeby\">Jack W. Aeby</a>, July 16, 1945, Civilian worker at Los Alamos laboratory, working under the aegis of the <a href=\"h",
+   "w": 1063,
+   "h": 804
+  },
+  {
+   "title": "File:Trinity shot color (4x3 cropped).jpg",
+   "thumb": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Trinity_shot_color_%284x3_cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/2/2d/Trinity_shot_color_%284x3_cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "<a href=\"https://en.wikipedia.org/wiki/Jack_Aeby\" class=\"extiw\" title=\"w:Jack Aeby\">Jack W. Aeby</a>, July 16, 1945, Civilian worker at Los Alamos laboratory, working under the aegis of the <a href=\"h",
+   "w": 1520,
+   "h": 1142
+  },
+  {
+   "title": "File:Trinity shot color.jpg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/Trinity_shot_color.jpg/1920px-Trinity_shot_color.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Trinity_shot_color.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "<a href=\"https://en.wikipedia.org/wiki/Jack_Aeby\" class=\"extiw\" title=\"w:Jack Aeby\">Jack W. Aeby</a>, July 16, 1945, Civilian worker at Los Alamos laboratory, working under the aegis of the <a href=\"h",
+   "w": 2426,
+   "h": 2790
+  }
+ ],
+ "trinity_gadget": [
+  {
+   "title": "File:HD.4G.053 (10540204545).jpg",
+   "thumb": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/HD.4G.053_%2810540204545%29.jpg/1920px-HD.4G.053_%2810540204545%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/d/d0/HD.4G.053_%2810540204545%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+   "license": "Public domain",
+   "artist": "Federal government of the United States",
+   "w": 5573,
+   "h": 4389
+  }
  ]
 }

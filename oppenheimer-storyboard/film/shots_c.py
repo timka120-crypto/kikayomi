@@ -1105,7 +1105,7 @@ def s147(c, t, d, W, H):
     bg_fill(c, W, H, pal)
     lines = [("SOURCES AND DATA", 26, "semi"), ("", 10, "reg"),
              ("Archival photographs: U.S. National Archives / U.S. Air Force (Hiroshima and Nagasaki, 1945);", 18, "reg"),
-             ("Los Alamos National Laboratory (identification photograph of J. Robert Oppenheimer).", 18, "reg"),
+             ("Los Alamos National Laboratory (Oppenheimer identification photograph; Trinity fireball, Berlyn Brixner).", 18, "reg"),
              ("Recreated documents are re-set from the originals and labelled RECREATION.", 18, "reg"),
              ("Maps: Natural Earth, world-atlas, us-atlas, Historical Basemaps (1938 boundaries).", 18, "reg"),
              ("Figures: U.S. Strategic Bombing Survey (1946); City of Hiroshima; Los Alamos National Laboratory.", 18, "reg"),

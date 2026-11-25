@@ -1192,6 +1192,12 @@ def trinity_view(c, W, H, t_since, cam_z=-60, mono=False, observers=False, t=0.0
 
 @shot(86)
 def s86(c, t, d, W, H):
+    if have_photo("trinity_fireball_0.jpg"):
+        photo_shot(c, t, d, W, H, "trinity_fireball_0.jpg", DES, "BERLYN BRIXNER / LOS ALAMOS NATIONAL LABORATORY · 0.016 s",
+                   start=(0.5, 0.55, 1.0), end=(0.5, 0.5, 1.15))
+        location_card(c, W, H, [("TRINITY TEST SITE, NEW MEXICO, USA", 28, "semi", "fg"), ("16 JULY 1945 · 5:29:45 AM LOCAL TIME", 20, "med", "accent")],
+                      clamp((t - 0.6) / 0.8), DES)
+        return
     trinity_view(c, W, H, t * 0.35, cam_z=-120)
     location_card(c, W, H, [("TRINITY TEST SITE, NEW MEXICO, USA", 28, "semi", "fg"), ("16 JULY 1945 · 5:29:45 AM LOCAL TIME", 20, "med", "accent")],
                   clamp((t - 0.6) / 0.8), DES)
@@ -1200,6 +1206,10 @@ def s86(c, t, d, W, H):
 
 @shot(87)
 def s87(c, t, d, W, H):
+    if have_photo("trinity_fireball_1.jpg"):
+        photo_shot(c, t, d, W, H, "trinity_fireball_1.jpg", DES, "LOS ALAMOS NATIONAL LABORATORY / NNSA · 0.053 s",
+                   start=(0.5, 0.5, 1.0), end=(0.5, 0.42, 1.12))
+        return
     trinity_view(c, W, H, 2.5 + t * 0.9, cam_z=-160)
     small_tag(c, W, H, "2D RECONSTRUCTION", DES)
 
