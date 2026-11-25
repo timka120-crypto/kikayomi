@@ -1,0 +1,279 @@
+<title>Oppenheimer Storyboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: film-slate production sheet. Sticky control bar, proportional runtime strip, scene rail + shot cards. */
+:root {
+  --bg: #eceef0; --surface: #f7f8f9; --ink: #16202b; --muted: #56616d; --rule: #c9cfd6;
+  --accent: #b4521c; --rec: #33688f; --arch: #85613a; --gfx: #2b776b; --mix: #6b5a8e;
+  --chip: #e0e4e8;
+  --f-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11161c; --surface: #19212a; --ink: #e3e7eb; --muted: #95a1ad; --rule: #2c3743;
+  --accent: #e2803f; --rec: #73a5cc; --arch: #c79f6f; --gfx: #5fb6a6; --mix: #a796cf; --chip: #222c37;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #11161c; --surface: #19212a; --ink: #e3e7eb; --muted: #95a1ad; --rule: #2c3743;
+  --accent: #e2803f; --rec: #73a5cc; --arch: #c79f6f; --gfx: #5fb6a6; --mix: #a796cf; --chip: #222c37;
+  color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; letter-spacing: .01em; text-wrap: balance; margin: 0 }
+a { color: inherit }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums }
+.label { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600 }
+
+header.top { padding-block: 28px 18px; border-bottom: 1px solid var(--rule) }
+.slate { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end }
+.slate h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1; text-transform: uppercase; letter-spacing: .03em }
+.slate .sub { font-family: var(--f-display); font-size: clamp(16px, 2.2vw, 22px); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-top: 6px }
+.facts { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 22px; text-align: left }
+.facts div b { display: block; font-family: var(--f-mono); font-size: 20px; font-weight: 500 }
+@media (max-width: 760px) { .slate { grid-template-columns: 1fr } .facts { grid-template-columns: repeat(2, auto) } }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--rule) }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding-block: 10px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { font: 500 12px var(--f-body); border: 1px solid var(--rule); background: var(--chip); color: var(--ink); border-radius: 3px; padding: 5px 10px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center }
+.chip[aria-pressed="false"] { opacity: .45 }
+.chip:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.sw { width: 9px; height: 9px; border-radius: 1px; display: inline-block }
+.t-REC { --c: var(--rec) } .t-ARCH { --c: var(--arch) } .t-GFX { --c: var(--gfx) } .t-MIX { --c: var(--mix) }
+.sw { background: var(--c) }
+#q { flex: 1 1 220px; min-width: 0; font: 14px var(--f-body); padding: 7px 10px; border: 1px solid var(--rule); border-radius: 3px; background: var(--bg); color: var(--ink) }
+.btn { font: 500 12px var(--f-body); border: 1px solid var(--rule); background: transparent; color: var(--ink); border-radius: 3px; padding: 6px 10px; cursor: pointer }
+.count { font-size: 12px; color: var(--muted) }
+
+.strip-box { padding-block: 18px 6px }
+.strip-scroll { overflow-x: auto; padding-bottom: 4px }
+.strip { display: flex; height: 34px; min-width: 760px; gap: 1px; background: var(--rule); border: 1px solid var(--rule) }
+.strip a { display: block; background: var(--c); opacity: .85; position: relative }
+.strip a:hover, .strip a:focus-visible { opacity: 1; outline: none; box-shadow: inset 0 -4px 0 var(--ink) }
+.strip a.sb { margin-left: 3px }
+.ticks { display: flex; min-width: 760px; font: 11px var(--f-mono); color: var(--muted); margin-top: 4px }
+.ticks span { flex: none; border-left: 1px solid var(--rule); padding-left: 4px; overflow: hidden; white-space: nowrap }
+
+.layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 28px; padding-block: 18px 60px }
+nav.rail { position: sticky; top: 74px; align-self: start; max-height: calc(100vh - 90px); overflow: auto }
+nav.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+nav.rail a { display: grid; grid-template-columns: 22px 1fr; gap: 6px; text-decoration: none; padding: 6px 8px; border-radius: 3px; font-size: 13px; line-height: 1.3 }
+nav.rail a:hover { background: var(--chip) }
+nav.rail a .mono { color: var(--muted); font-size: 11px; grid-column: 2 }
+nav.rail a b { font-family: var(--f-mono); color: var(--accent); font-weight: 500; grid-row: span 2 }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr } nav.rail { position: static; max-height: none } nav.rail ol { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) } }
+
+section.scene { margin-bottom: 44px; scroll-margin-top: 70px }
+.scene-head { border-top: 3px solid var(--ink); padding-top: 10px; margin-bottom: 16px; display: grid; gap: 10px }
+.scene-head h2 { font-size: clamp(26px, 3.4vw, 36px); text-transform: uppercase; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap }
+.scene-head h2 .mono { font-size: 15px; color: var(--accent); font-weight: 500 }
+.scene-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 24px; font-size: 13.5px }
+.scene-meta p { margin: 2px 0 0; color: var(--ink) }
+
+article.shot { background: var(--surface); border: 1px solid var(--rule); border-left: 4px solid var(--c); border-radius: 2px; padding: 14px 16px 16px; margin-bottom: 12px; scroll-margin-top: 70px }
+.shot-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 10px }
+.shot-no { font-family: var(--f-display); font-size: 28px; font-weight: 700; line-height: 1 }
+.shot-tc { font-family: var(--f-mono); font-size: 14px }
+.shot-d { font-family: var(--f-mono); font-size: 12px; color: var(--muted) }
+.pill { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--c); border: 1px solid var(--c); border-radius: 2px; padding: 1px 7px }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 22px; margin: 0 }
+.fields div { min-width: 0 }
+.fields dt { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); font-weight: 600 }
+.fields dd { margin: 2px 0 0; font-size: 14px }
+.fields .wide { grid-column: 1 / -1 }
+@media (max-width: 640px) { .fields { grid-template-columns: 1fr } }
+.prompt { margin-top: 12px; border-top: 1px dashed var(--rule); padding-top: 10px }
+.prompt-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px }
+.prompt p { margin: 0; font-family: var(--f-mono); font-size: 12.5px; line-height: 1.6; background: var(--bg); border: 1px solid var(--rule); border-radius: 2px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere }
+body.no-prompts .prompt { display: none }
+mark { background: color-mix(in srgb, var(--accent) 28%, transparent); color: inherit }
+
+.bible { border-top: 3px solid var(--ink); padding-top: 12px }
+.bible h2 { font-size: 34px; text-transform: uppercase; margin-bottom: 12px }
+.bible h3 { font-size: 20px; text-transform: uppercase; margin: 22px 0 8px }
+.bible ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px }
+.tbl { overflow-x: auto; border: 1px solid var(--rule) }
+table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 620px }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: var(--chip) }
+td.mono { white-space: nowrap }
+.note { font-size: 13px; color: var(--muted) }
+#loading { padding: 40px 0; color: var(--muted) }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
+html { scroll-behavior: smooth }
+</style>
+
+<header class="top">
+  <div class="wrap slate">
+    <div>
+      <div class="label">Production storyboard · visual script, no narration</div>
+      <h1>Oppenheimer</h1>
+      <div class="sub">The man who created the power to destroy the world</div>
+    </div>
+    <div class="facts">
+      <div><span class="label">Runtime</span><b>15:00</b></div>
+      <div><span class="label">Shots</span><b id="f-shots">147</b></div>
+      <div><span class="label">Scenes</span><b id="f-scenes">12</b></div>
+      <div><span class="label">Format</span><b>16:9 4K</b></div>
+    </div>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="chips" id="chips" role="group" aria-label="Filter by shot type"></div>
+    <input id="q" type="search" placeholder="Search shots, places, people…" aria-label="Search shots">
+    <button class="btn" id="toggle-prompts" type="button" aria-pressed="true">Hide prompts</button>
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<div class="wrap strip-box">
+  <div class="label" style="margin-bottom:6px">Runtime strip · each block is one shot, width = duration · click to jump</div>
+  <div class="strip-scroll"><div class="strip" id="strip"></div><div class="ticks" id="ticks"></div></div>
+</div>
+
+<div class="wrap layout">
+  <nav class="rail" aria-label="Scenes"><ol id="rail"></ol></nav>
+  <main id="main"><p id="loading">Loading 147 shots…</p></main>
+</div>
+
+<script>
+(function () {
+  const TYPES = { REC: "Reconstruction", ARCH: "Archival", GFX: "Graphics", MIX: "Map → footage" };
+  const on = { REC: true, ARCH: true, GFX: true, MIX: true };
+  let D = null;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const secs = (tc) => { const [m, s] = tc.split(":").map(Number); return m * 60 + s; };
+
+  function hl(text, q) {
+    const t = esc(text);
+    if (!q) return t;
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
+    return t.replace(re, (m) => "<mark>" + m + "</mark>");
+  }
+
+  function chips() {
+    const counts = {};
+    D.shots.forEach((s) => (counts[s.type] = (counts[s.type] || 0) + 1));
+    $("#chips").innerHTML = Object.keys(TYPES).map((k) =>
+      `<button type="button" class="chip t-${k}" data-t="${k}" aria-pressed="true"><span class="sw"></span>${TYPES[k]} <span class="mono">${counts[k] || 0}</span></button>`).join("");
+    $("#chips").addEventListener("click", (e) => {
+      const b = e.target.closest(".chip"); if (!b) return;
+      on[b.dataset.t] = !on[b.dataset.t];
+      b.setAttribute("aria-pressed", on[b.dataset.t]);
+      render();
+    });
+  }
+
+  function strip() {
+    let prev = 0;
+    $("#strip").innerHTML = D.shots.map((s) => {
+      const sb = s.scene !== prev && prev !== 0; prev = s.scene;
+      return `<a href="#shot-${s.n}" class="t-${s.type}${sb ? " sb" : ""}" style="flex:${s.dur} 0 0" title="Shot ${s.n} · ${s.start}–${s.end} · ${esc(TYPES[s.type])}" aria-label="Shot ${s.n}"></a>`;
+    }).join("");
+    $("#ticks").innerHTML = D.scenes.map((sc) =>
+      `<span style="flex:${sc.dur} 0 0" title="${esc(sc.title)}">${sc.start} S${sc.n}</span>`).join("");
+  }
+
+  function rail() {
+    $("#rail").innerHTML = D.scenes.map((sc) =>
+      `<li><a href="#scene-${sc.n}"><b>${String(sc.n).padStart(2, "0")}</b>${esc(sc.title)}<span class="mono">${sc.start}–${sc.end} · ${sc.last - sc.first + 1} shots</span></a></li>`).join("");
+  }
+
+  function shotHTML(s, q) {
+    const f = (label, v, wide) => `<div${wide ? ' class="wide"' : ""}><dt>${label}</dt><dd>${hl(v, q)}</dd></div>`;
+    return `<article class="shot t-${s.type}" id="shot-${s.n}">
+      <div class="shot-top"><span class="shot-no">${String(s.n).padStart(3, "0")}</span>
+        <span class="shot-tc">${s.start} – ${s.end}</span><span class="shot-d">${s.dur} s</span>
+        <span class="pill">${esc(s.type_label)}</span></div>
+      <dl class="fields">
+        ${f("What the viewer sees", s.see, true)}
+        ${f("Action & environmental movement", s.act)}
+        ${f("Camera angle & movement", s.cam)}
+        ${f("Lighting & atmosphere", s.light)}
+        ${f("Transition from previous shot", s.tr)}
+        ${f("Motion graphics & on-screen information", s.gfx, true)}
+      </dl>
+      <div class="prompt"><div class="prompt-head"><span class="label">AI video generation prompt</span>
+        <button class="btn copy" type="button" data-n="${s.n}">Copy prompt</button></div>
+        <p id="p-${s.n}">${hl(s.prompt, q)}</p></div>
+    </article>`;
+  }
+
+  function render() {
+    const q = $("#q").value.trim();
+    const ql = q.toLowerCase();
+    let shown = 0;
+    const html = D.scenes.map((sc) => {
+      const list = D.shots.filter((s) => s.scene === sc.n && on[s.type] &&
+        (!ql || [s.see, s.act, s.cam, s.light, s.gfx, s.tr, s.prompt].join(" ").toLowerCase().includes(ql)));
+      shown += list.length;
+      if (!list.length) return "";
+      return `<section class="scene" id="scene-${sc.n}">
+        <div class="scene-head"><h2>${esc(sc.title)} <span class="mono">Scene ${sc.n} · ${sc.start}–${sc.end} · ${esc(sc.period)}</span></h2>
+          <div class="scene-meta"><div><span class="label">Colour grade</span><p>${esc(sc.grade)}</p></div>
+          <div><span class="label">Sound design</span><p>${esc(sc.sound)}</p></div></div></div>
+        ${list.map((s) => shotHTML(s, q)).join("")}</section>`;
+    }).join("");
+    $("#main").innerHTML = (html || '<p class="note">No shots match. Clear the search or turn a shot type back on.</p>') + bible();
+    $("#count").textContent = shown === D.shots.length ? `${shown} shots` : `${shown} of ${D.shots.length} shots`;
+  }
+
+  function bible() {
+    const li = (a) => a.map((x) => `<li>${x}</li>`).join("");
+    return `<section class="bible" id="bible"><h2>Production bible</h2>
+      <h3>Workflow</h3><ul>${li([
+        "Generate every shot as its own clip (3–8 s). Never generate long sequences in one pass; build complex moments from the connected shots listed here.",
+        "Before generating, build a reference-image set for each character below from public-domain photographs, and use it on every shot where that person appears.",
+        "Build all maps, timelines, labels and diagrams in After Effects (or Remotion) from verified data. Use AI only for background plates and textures; AI generators cannot draw accurate coastlines or text.",
+        "Archival shots (tag ARCHIVAL) must use the real source file. Animate only with parallax and camera moves; never regenerate faces or add people. Clear licences for newspaper scans and the NBC 1965 footage.",
+        "Composite aircraft markings (“Enola Gay”, 82, circle R; Bockscar 77) and all period signage in post from reference photographs.",
+        "Keep a RECONSTRUCTION or ARCHIVAL tag in the corner of every non-graphic shot. No AI-generated images of victims: the human cost is shown only through real archival photographs and data."
+      ])}</ul>
+      <h3>Character reference sheets</h3><ul>${li(D.characters.map((c) => `<b class="mono">${esc(c.key)}</b>: ${esc(c.sheet)}`))}<li><b class="mono">ENOLA_GAY</b>: ${esc(D.aircraft)}</li></ul>
+      <h3>Map production spec</h3><ul>${li(D.map_spec.map((m) => `<b>${esc(m.name)}</b>: ${esc(m.spec)}`))}</ul>
+      <h3>Marker coordinates</h3><p class="note">Re-check every marker against its source before the final render.</p>
+      <div class="tbl"><table><thead><tr><th>Place</th><th>Lat</th><th>Lon</th><th>Note</th></tr></thead><tbody>
+      ${D.coords.map((c) => `<tr><td>${esc(c.place)}</td><td class="mono">${esc(c.lat)}</td><td class="mono">${esc(c.lon)}</td><td>${esc(c.note)}</td></tr>`).join("")}</tbody></table></div>
+      <h3>Typography</h3><ul>${li(D.typography.map((t) => `<b>${esc(t.name)}</b>: ${esc(t.spec)}`))}</ul>
+      <h3>Final QC checklist</h3><ul>${li([
+        "Every date and local time on screen matches: Trinity 16 July 1945, 5:29:45 AM · Hiroshima 6 August 1945, 8:15 AM · Nagasaki 9 August 1945, 11:02 AM.",
+        "Every marker sits at the coordinates above; Trinity is south of Los Alamos on the Jornada del Muerto.",
+        "Routes drawn only for documented legs and labelled schematic.",
+        "No shot holds a static image without parallax or camera movement; no shot exceeds 8 s.",
+        "Faces and hands checked frame by frame; Oppenheimer consistent with the age-correct reference sheet.",
+        "No generated text artefacts in AI clips; all text is from the graphics layer.",
+        "No reconstruction presented as archival; tags present on every shot."
+      ])}</ul></section>`;
+  }
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".copy"); if (!b) return;
+    const s = D.shots[Number(b.dataset.n) - 1];
+    const done = (t) => { b.textContent = t; setTimeout(() => (b.textContent = "Copy prompt"), 1600); };
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById("p-" + s.n)); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); done("Selected – press Ctrl/⌘+C"); };
+    try { navigator.clipboard.writeText(s.prompt).then(() => done("Copied"), fallback); } catch (err) { fallback(); }
+  });
+
+  $("#toggle-prompts").addEventListener("click", (e) => {
+    const hide = document.body.classList.toggle("no-prompts");
+    e.currentTarget.textContent = hide ? "Show prompts" : "Hide prompts";
+    e.currentTarget.setAttribute("aria-pressed", String(!hide));
+  });
+  let tmr; $("#q").addEventListener("input", () => { clearTimeout(tmr); tmr = setTimeout(render, 180); });
+
+  fetch("storyboard.json").then((r) => r.json()).then((d) => {
+    D = d;
+    $("#f-shots").textContent = d.shot_count; $("#f-scenes").textContent = d.scenes.length;
+    chips(); strip(); rail(); render();
+    if (location.hash) { const el = document.querySelector(location.hash); if (el) el.scrollIntoView(); }
+  }).catch(() => { $("#main").innerHTML = '<p class="note">The storyboard data could not be loaded. Reload the page to try again.</p>'; });
+})();
+</script>
