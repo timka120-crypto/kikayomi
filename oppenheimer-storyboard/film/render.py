@@ -25,8 +25,8 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "renders"
 PARTS = OUT / "parts"
 SB = json.loads((ROOT / "storyboard.json").read_text())
-FPS = 24
-XF = 0.4
+FPS = 30
+XF = 0.5
 
 
 def secs(tc):
@@ -46,6 +46,8 @@ def placeholder(c, t, d, W, H, shot):
 
 
 def draw_shot(c, shot, t_local, W, H):
+    import kit
+    kit.CARD_POS[0] = "tl" if shot["type"] in ("REC", "MIX") else "bl"
     fn = SHOTS.get(shot["n"])
     if fn is None:
         placeholder(c, t_local, shot["d"], W, H, shot)
@@ -61,6 +63,8 @@ class Film:
         self.grain = Grain(W, H)
 
     def frame(self, t):
+        import engine
+        engine.CLOCK[0] = t
         c, W, H = self.c, self.W, self.H
         i = next(j for j, s in enumerate(TL) if s["t0"] <= t < s["t0"] + s["d"] or j == len(TL) - 1)
         cur = TL[i]

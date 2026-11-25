@@ -690,3 +690,346 @@ def label_line(c, x0, y0, x1, y1, s, k, pal, a=1.0, align="left", size=16):
 def energy_ring(c, x, y, r, a, k):
     c.drawCircle(x, y, r, P(c=col((255, 220, 170), a * 0.6), stroke=2.2 * k))
     c.drawCircle(x, y, r * 0.7, P(c=col((255, 220, 170), a * 0.2), blur=12 * k))
+
+
+# =====================================================================================
+# v2 TEXT SYSTEM (overrides the first-pass helpers above)
+#  - every overlay line is measured; plates size to their text; long lines wrap
+#  - one consistent reveal: soft left-to-right wipe + short slide + fade, eased
+#  - labels on maps/timelines are placed without collisions and drawn with a halo
+# =====================================================================================
+from engine import measure  # noqa: E402
+
+CARD_POS = ["bl"]          # set per shot by the renderer: "tl" for 2D scenes, "bl" otherwise
+LIGHT = (242, 238, 228)
+SOFT = (206, 210, 212)
+
+
+def reveal_text(c, s, x, y, size, fc, color, prog, track=0.0, align="left", shadow=0.6, halo=None):
+    """Wipe-reveal a line of text. prog 0..1 (already eased by caller or raw)."""
+    if prog <= 0.001 or not s:
+        return measure(s, size, fc, track) if s else 0
+    w = measure(s, size, fc, track)
+    x0 = x - (w / 2 if align == "center" else (w if align == "right" else 0))
+    p = eout(prog)
+    slide = (1 - p) * size * 0.35
+    c.save()
+    c.clipRect(skia.Rect(x0 - size, y - size * 1.3, x0 + (w + size * 2) * p, y + size * 0.6))
+    text(c, s, x0 + slide, y, size, fc, color, clamp(prog * 1.8), track=track, shadow=shadow, halo=halo)
+    c.restore()
+    return w
+
+
+def wrap_m(s, size, fc, maxw, track=0.0):
+    words, lines, cur = s.split(), [], ""
+    for wd in words:
+        trial = (cur + " " + wd).strip()
+        if measure(trial, size, fc, track) > maxw and cur:
+            lines.append(cur); cur = wd
+        else:
+            cur = trial
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def small_tag(c, W, H, s, pal, a=0.7):
+    k = K(H)
+    text(c, s, W - 64 * k, 56 * k, 12 * k, "mono", (214, 216, 216), a * 0.9, track=0.14, align="right", shadow=0.8)
+
+
+def location_card(c, W, H, lines, a, pal, x=None, y=None, plate=True, pos=None):
+    """Documentary location card. lines: [(text, size, face, colour_key)]. a: visibility 0..1."""
+    if a <= 0.01:
+        return
+    k = K(H)
+    pos = pos or CARD_POS[0]
+    accent = mix(pal.get("accent", (201, 164, 99)), (255, 255, 255), 0.15)
+    maxw = W * 0.46
+    rows = []
+    for i, (s, size, fc, ck) in enumerate(lines):
+        sz = size * k
+        tr = 0.16 if i == 0 else (0.1 if fc.startswith("mono") else 0.04)
+        colr = LIGHT if i == 0 else (accent if ck == "accent" else (SOFT if ck != "muted" else (170, 176, 180)))
+        for ln in wrap_m(s, sz, fc, maxw, tr):
+            rows.append((ln, sz, fc, colr, tr))
+    padx, pady = 28 * k, 22 * k
+    widths = [measure(r[0], r[1], r[2], r[4]) for r in rows]
+    bw = max(widths) + padx * 2
+    gaps = [r[1] * (1.25 if j else 1.0) for j, r in enumerate(rows)]
+    bh = sum(gaps) + pady * 2 + 14 * k
+    x = (64 * k if x is None else x)
+    if y is None:
+        y = (H - 64 * k - bh) if pos == "bl" else 96 * k
+    grow = eout(clamp(a / 0.45))
+    if plate:
+        c.drawRect(skia.Rect(x, y, x + bw * grow, y + bh), P(c=col((8, 10, 12), 0.66 * clamp(a * 2))))
+        c.drawRect(skia.Rect(x, y, x + 3 * k, y + bh * grow), P(c=col(accent, clamp(a * 2))))
+    yy = y + pady + 14 * k
+    for j, (ln, sz, fc, colr, tr) in enumerate(rows):
+        yy += gaps[j] if j else rows[0][1] * 0.82
+        prog = clamp((a - 0.15 - j * 0.1) / 0.55)
+        reveal_text(c, ln, x + padx, yy, sz, fc, colr, prog, track=tr, shadow=0.0 if plate else 0.7)
+
+
+def callout(c, t, d, W, H, pal, lines, plate=True, icon=None, x=None, y=None, maxw=900, bg=True, title=None):
+    k = K(H)
+    if bg:
+        bg_fill(c, W, H, pal)
+    x = 0.14 * W if x is None else x
+    y = 0.4 * H if y is None else y
+    if icon:
+        icon(c, t, x, y, k)
+        x += 300 * k
+    a0 = eout((t - 0.2) / 0.8)
+    c.drawLine(x, y - 46 * k, x + 120 * k * a0, y - 46 * k, P(c=col(pal["accent"], a0), stroke=2.0 * k))
+    yy = y
+    if title:
+        reveal_text(c, title, x, yy, 44 * k, "semi", LIGHT, clamp((t - 0.3) / 0.8), track=0.1)
+        yy += 70 * k
+    n = 0
+    for s in lines:
+        for ln in wrap_m(s, 32 * k, "reg", maxw * k):
+            reveal_text(c, ln, x, yy, 32 * k, "reg", SOFT, clamp((t - 0.7 - n * 0.18) / 0.8))
+            yy += 48 * k
+            n += 1
+        yy += 12 * k
+
+
+def title_card(c, t, d, W, H, pal, main, sub=None, tag=None, main_size=104, sub_size=24):
+    k = K(H)
+    bg_fill(c, W, H, pal)
+    equations_backdrop(c, W, H, t, pal)
+    push = 1 + 0.025 * t / max(d, 0.1)
+    c.save(); c.translate(W / 2, H / 2); c.scale(push, push); c.translate(-W / 2, -H / 2)
+    p = eout((t - 0.3) / 1.6)
+    tr = lerp(0.6, 0.34, p)
+    text(c, main, W / 2, H * 0.5, main_size * k, "semi", LIGHT, clamp((t - 0.3) / 1.2), track=tr, align="center", shadow=0.6)
+    if sub:
+        wl = measure(main, main_size * k, "semi", tr)
+        c.drawLine(W / 2 - wl / 2 * p, H * 0.5 + 36 * k, W / 2 + wl / 2 * p, H * 0.5 + 36 * k, P(c=col(pal["accent"], p), stroke=1.6 * k))
+        for j, line in enumerate(sub if isinstance(sub, list) else [sub]):
+            reveal_text(c, line, W / 2, H * 0.5 + (84 + j * 38) * k, sub_size * k, "med", SOFT, clamp((t - 1.3 - j * 0.2) / 1.0),
+                        track=0.2, align="center")
+    c.restore()
+    if tag:
+        small_tag(c, W, H, tag, pal)
+
+
+def timeline(c, t, d, W, H, pal, events, focus=None, ticks=(1904, 1927, 1939, 1942, 1943, 1945, 1949, 1954, 1963, 1967),
+             reveal_all=False, bg=True, ghost=None):
+    k = K(H)
+    if bg:
+        bg_fill(c, W, H, pal)
+    if ghost:
+        ghost(c, t)
+    y = H * 0.55
+    lo, hi = (focus if focus else (1900, 1970))
+    span = W * 0.84
+    pan = (t / max(d, 0.1) - 0.5) * 0.02 * W
+
+    def X(year):
+        return W * 0.08 + (year - lo) / (hi - lo) * span - pan
+
+    draw = eout(t / 1.0)
+    c.drawLine(X(lo), y, lerp(X(lo), X(hi), draw), y, P(c=col(LIGHT, 0.55), stroke=1.8 * k))
+    last = -1e9
+    for yr in ticks:
+        if not (lo <= yr <= hi):
+            continue
+        xx = X(yr)
+        if xx > lerp(X(lo), X(hi), draw):
+            continue
+        c.drawLine(xx, y - 8 * k, xx, y + 8 * k, P(c=col(LIGHT, 0.55), stroke=1.4 * k))
+        if xx - last >= 64 * k:
+            text(c, str(yr), xx, y + 36 * k, 17 * k, "mono", (180, 186, 190), 0.95, align="center")
+            last = xx
+    # collision-free label layout
+    placed = []
+    levels = [1, -1, 2, -2, 3, -3]
+    order = sorted(range(len(events)), key=lambda i: events[i][0])
+    lay = {}
+    for i in order:
+        yr, label = events[i]
+        lines = wrap_m(label, 20 * k, "med", 300 * k)
+        w = max(measure(ln, 20 * k, "med") for ln in lines) + 24 * k
+        h = len(lines) * 27 * k
+        xx = X(yr)
+        for lv in levels:
+            top = (y - (64 + (abs(lv) - 1) * 74) * k - h) if lv > 0 else (y + (62 + (abs(lv) - 1) * 74) * k)
+            box = (xx - w / 2, top, xx + w / 2, top + h)
+            if all(not (box[0] < b[2] and b[0] < box[2] and box[1] < b[3] and b[1] < box[3]) for b in placed):
+                placed.append(box); lay[i] = (lv, top, lines); break
+        else:
+            lay[i] = (1, y - 64 * k - h, lines)
+    for rank, i in enumerate(order):
+        yr, label = events[i]
+        lv, top, lines = lay[i]
+        a = clamp((t - 0.5 - rank * (0.18 if reveal_all else 0.5)) / 0.7)
+        if a <= 0:
+            continue
+        xx = X(yr)
+        end = top + len(lines) * 27 * k + 6 * k if lv > 0 else top - 14 * k
+        c.drawLine(xx, y, xx, lerp(y, end, eout(a)), P(c=col(pal["accent"], a), stroke=1.3 * k))
+        c.drawCircle(xx, y, 6.5 * k * eout(a), P(c=col(pal["accent"])))
+        for j, ln in enumerate(lines):
+            reveal_text(c, ln, xx, top + (j + 0.8) * 27 * k, 20 * k, "med", LIGHT, clamp(a * 1.2 - j * 0.15), align="center")
+
+
+def legend(c, W, H, items, pal, a, x=None, y=None):
+    if a <= 0.01:
+        return
+    k = K(H)
+    x = 64 * k if x is None else x
+    y = 120 * k if y is None else y
+    w = max(measure(lb, 16 * k, "med", 0.04) for _, lb, _ in items) + 80 * k
+    c.drawRect(skia.Rect(x - 18 * k, y - 30 * k, x - 18 * k + w * eout(clamp(a / 0.5)), y + len(items) * 34 * k), P(c=col((8, 10, 12), 0.62 * a)))
+    for i, (colr, label, kind) in enumerate(items):
+        yy = y + i * 34 * k
+        if kind in ("fill", "hatch"):
+            c.drawRect(skia.Rect(x, yy - 14 * k, x + 24 * k, yy + 2 * k), P(c=col(colr, a)))
+        elif kind == "line":
+            c.drawLine(x, yy - 6 * k, x + 24 * k, yy - 6 * k, P(c=col(colr, a), stroke=2 * k))
+        else:
+            c.drawCircle(x + 12 * k, yy - 6 * k, 6 * k, P(c=col(colr, a)))
+        reveal_text(c, label, x + 40 * k, yy, 16 * k, "med", LIGHT, clamp((a - 0.2 - i * 0.1) / 0.6), track=0.04, shadow=0)
+
+
+def map_title(c, W, H, pal, title, sub, a):
+    if a <= 0.01:
+        return
+    k = K(H)
+    reveal_text(c, title, 64 * k, 92 * k, 34 * k, "semi", LIGHT, a, track=0.2)
+    if sub:
+        reveal_text(c, sub, 64 * k, 124 * k, 14 * k, "mono", SOFT, clamp(a * 1.3 - 0.2), track=0.12)
+
+
+def date_counter(c, W, H, pal, s, a):
+    k = K(H)
+    text(c, s, W - 64 * k, 118 * k, 32 * k, "monom", mix(pal["accent"], (255, 255, 255), 0.15), a, align="right", track=0.06, shadow=0.7)
+
+
+def _overlap(a, b):
+    return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
+
+
+def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=(), routes=(), rings=(), t=0.0,
+             grat=10, land_a=1.0, coast_w=1.1):
+    k = K(H)
+    mat, m = mv.view(W, H, center, width_km)
+    c.clear(col(pal["sea"]))
+    c.drawRect(skia.Rect(0, 0, W, H), skia.Paint(Shader=skia.GradientShader.MakeRadial(
+        (W * 0.55, H * 0.45), W * 0.8, [col(mix(pal["sea"], (255, 255, 255), 0.05)), col(pal["sea"])])))
+    gp = P(c=col((255, 255, 255), 0.06), stroke=k)
+    b = mv.bbox
+    for lon in np.arange(math.floor(b[0] / grat) * grat, b[2] + 1, grat):
+        pts = [mv.S(mat, lon, la) for la in np.linspace(max(b[1], -80), min(b[3], 85), 60)]
+        c.drawPath(poly([(p.x(), p.y()) for p in pts], close=False), gp)
+    for lat in np.arange(math.floor(b[1] / grat) * grat, b[3] + 1, grat):
+        pts = [mv.S(mat, lo, lat) for lo in np.linspace(b[0], b[2], 120)]
+        c.drawPath(poly([(p.x(), p.y()) for p in pts], close=False), gp)
+    lp = skia.Path(mv.land); lp.transform(mat)
+    c.drawPath(lp, P(c=col(pal["land"], land_a)))
+    for key, colr, a, hatched in fills:
+        if a <= 0.01:
+            continue
+        fp = skia.Path(mv.country(key)); fp.transform(mat)
+        c.drawPath(fp, P(c=col(colr, a * (0.55 if hatched else 0.9))))
+        if hatched:
+            hp = skia.Paint(AntiAlias=True, Shader=hatch_shader(*[int(v) for v in mix(colr, (255, 255, 255), 0.25)],
+                                                                 int(200 * a), max(4, int(14 * k)), max(1, int(4 * k))))
+            c.drawPath(fp, hp)
+        c.drawPath(fp, P(c=col(mix(colr, (255, 255, 255), 0.35), a * 0.8), stroke=1.0 * k))
+    c.drawPath(lp, P(c=col(pal["coast"], 0.8 * land_a), stroke=coast_w * k))
+    for pts, prog, colr in routes:
+        if prog <= 0:
+            continue
+        dense = []
+        for (a1, b1), (a2, b2) in zip(pts[:-1], pts[1:]):
+            for u in np.linspace(0, 1, 30, endpoint=False):
+                dense.append(mv.S(mat, lerp(a1, a2, u), lerp(b1, b2, u)))
+        dense.append(mv.S(mat, *pts[-1]))
+        path = poly([(p.x(), p.y()) for p in dense], close=False)
+        meas = skia.PathMeasure(path, False)
+        L = meas.getLength()
+        seg = skia.Path()
+        meas.getSegment(0, L * clamp(prog), seg, True)
+        rp = P(c=col(colr), stroke=2.4 * k)
+        rp.setPathEffect(skia.DashPathEffect.Make([12 * k, 8 * k], 0))
+        c.drawPath(seg, rp)
+        pos = meas.getPosTan(L * clamp(prog))
+        if pos and prog < 1:
+            c.drawCircle(pos[0].x(), pos[0].y(), 5 * k, P(c=col(colr)))
+    for lon, lat, km, a in rings:
+        p = mv.S(mat, lon, lat)
+        c.drawCircle(p.x(), p.y(), km * 1000 / m, P(c=col(pal["accent"], a * 0.8), stroke=1.6 * k))
+    # ---- markers + collision-free labels
+    occupied = [(0, 0, W, 135 * k), (0, H - 40 * k, W, H)]
+    light_map = sum(pal["sea"]) / 3 > 110
+    halo = mix(pal["sea"], (255, 255, 255), 0.55) if light_map else mix(pal["sea"], (0, 0, 0), 0.45)
+    ink = pal.get("ink", (50, 42, 34)) if light_map else LIGHT
+    region_c = mix(ink, pal["sea"], 0.35) if light_map else (196, 202, 206)
+    todo = []
+    mrects = []
+    for mk in markers:
+        lon, lat, name, a = mk[:4]
+        style = mk[4] if len(mk) > 4 else "dot"
+        off = mk[5] if len(mk) > 5 else (14, -12)
+        if a <= 0.01:
+            continue
+        p = mv.S(mat, lon, lat)
+        colr = (mix(pal["accent"], (255, 255, 255), 0.1) if not light_map else mix(pal["accent"], (0, 0, 0), 0.25)) if style in ("key", "target") else ink
+        r = (7 if style != "dot" else 4.5) * k
+        c.drawCircle(p.x(), p.y(), r * (0.6 + 0.4 * eout(a)), P(c=col(colr, a)))
+        if style in ("key", "target"):
+            c.drawCircle(p.x(), p.y(), r * 2.3, P(c=col(colr, a), stroke=1.6 * k))
+        mrects.append((p.x() - r * 1.6, p.y() - r * 1.6, p.x() + r * 1.6, p.y() + r * 1.6))
+        if name:
+            todo.append((p, name, a, style, off, colr))
+    occupied += mrects
+    for p, name, a, style, off, colr in sorted(todo, key=lambda z: z[3] == "dot"):
+        size = (18 if style != "dot" else 16) * k
+        fc = "semi" if style != "dot" else "med"
+        w = measure(name, size, fc, 0.12)
+        cands = [off, (20, -14), (20, 24), (-20, -14), (-20, 24), (0, -26), (0, 38)]
+        chosen = None
+        for ox, oy in cands:
+            ox, oy = ox * k, oy * k
+            x0 = p.x() + ox - (w if ox < 0 else (w / 2 if ox == 0 else 0))
+            box = (x0 - 4 * k, p.y() + oy - size, x0 + w + 4 * k, p.y() + oy + size * 0.3)
+            if box[0] > 20 * k and box[2] < W - 20 * k and all(not _overlap(box, o) for o in occupied):
+                chosen = (x0, p.y() + oy, box); break
+        if chosen is None:
+            continue
+        occupied.append(chosen[2])
+        reveal_text(c, name, chosen[0], chosen[1], size, fc, colr, a, track=0.12, shadow=0, halo=halo)
+    for lon, lat, txt, size, a in labels:
+        if a <= 0.01:
+            continue
+        p = mv.S(mat, lon, lat)
+        sz = (size + 2) * k
+        w = measure(txt, sz, "reg", 0.3)
+        box = (p.x() - w / 2, p.y() - sz, p.x() + w / 2, p.y() + sz * 0.3)
+        if any(_overlap(box, o) for o in occupied):
+            continue
+        occupied.append(box)
+        text(c, txt, p.x(), p.y(), sz, "reg", region_c, a * 0.85, track=0.3, align="center", halo=halo)
+    return mat, m
+
+
+_document_shot_v1 = document_shot
+
+
+def document_shot(c, t, d, W, H, surf, pal, focus=(0.5, 0.3), tag="RECREATION", tone=(46, 36, 28),
+                  tilt=6.0, push=(1.0, 1.35), highlight=None, caption_lines=None, under=None, shift=0.0):
+    if shift:
+        c.save(); c.translate(W * shift, 0)
+        _document_shot_v1(c, t, d, W, H, surf, pal, focus, None, tone, tilt, (push[0], min(push[1], 1.15)), highlight, None, under)
+        c.restore()
+        desk_edge = P(c=col(tone))
+        c.drawRect(skia.Rect(0, 0, W * shift, H), skia.Paint(Shader=skia.GradientShader.MakeLinear(
+            [(0, 0), (W * shift, 0)], [col(mix(tone, (0, 0, 0), 0.45)), col(mix(tone, (0, 0, 0), 0.45), 0)])))
+        if tag:
+            small_tag(c, W, H, tag, pal)
+        return
+    _document_shot_v1(c, t, d, W, H, surf, pal, focus, tag, tone, tilt, push, highlight, caption_lines, under)

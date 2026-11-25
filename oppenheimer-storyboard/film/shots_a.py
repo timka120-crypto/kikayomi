@@ -94,7 +94,7 @@ def s5(c, t, d, W, H):
 
 @shot(6)
 def s6(c, t, d, W, H):
-    st = Stage(c, W, H, x=track(t, d, -0.6, 0.9), y=-1.6, z=0.6, f=1500)
+    st = Stage(c, W, H, x=track(t, d, -1.2, 0.2), y=-1.7, z=-0.8, f=1000)
     c.clear(col((30, 26, 22)))
     with st.at(2.2):
         wall(c, -6, 6, -4, (58, 50, 42), light=(-1.5, -2.4), light_r=2.5, light_a=0.25)
@@ -454,12 +454,15 @@ def bicycle(c, x, t, look, facing=1):
 @shot(19)
 def s19(c, t, d, W, H):
     ox = -3 + 1.0 * t
-    st = Stage(c, W, H, x=ox + 0.8, y=track(t, d, -1.2, -4.0), z=-0.6)
+    st = Stage(c, W, H, x=ox + 0.8, y=track(t, d, -1.5, -2.3), z=-1.2)
     sky(c, W, H, (150, 170, 190), (214, 214, 206))
     ground(c, W, H, st.cam, (110, 104, 96), (150, 146, 136))
     with st.at(70):
-        c.drawRect(skia.Rect(-4, -40, 4, 0), P(c=col((130, 100, 84))))
-        c.drawPath(poly([(-4.5, -40), (0, -56), (4.5, -40)]), P(c=col((80, 90, 84))))
+        for tx in (-2.5, 4.5):
+            c.drawRect(skia.Rect(tx - 2.6, -50, tx + 2.6, 0), P(c=col((130, 100, 84))))
+            c.drawPath(poly([(tx - 3.0, -50), (tx, -66), (tx + 3.0, -50)]), P(c=col((80, 90, 84))))
+            for yy in (-46, -40):
+                c.drawRect(skia.Rect(tx - 0.8, yy, tx + 0.8, yy + 3), P(c=col((60, 46, 40))))
     with st.at(18):
         for i, bx in enumerate(np.arange(-26, 30, 7.5)):
             timber_house(c, bx, 7, 9 + (i % 3), [(222, 210, 186), (214, 200, 170), (230, 218, 196)][i % 3], seed=i)
@@ -621,22 +624,22 @@ def s26(c, t, d, W, H):
 
 @shot(27)
 def s27(c, t, d, W, H):
-    n_ = len("E² = p²c² + m²c⁴") * clamp(t / (d * 0.85))
-    st = Stage(c, W, H, x=-2.7 + n_ * 0.165 - 0.3, y=-1.75, z=1.2, f=560)
+    eq = "E² = p²c² + m²c⁴"
+    st = Stage(c, W, H, x=track(t, d, -0.2, 0.1), y=-1.65, z=-0.4, f=950)
     c.clear(col((30, 40, 36)))
     with st.at(2.0):
-        blackboard(c, -3, -2.6, 3, -0.6, ["E² = p²c² + m²c⁴"], size=0.3, start=(0.3, 0.9), reveal=clamp(t / (d * 0.85)))
-        n = len("E² = p²c² + m²c⁴") * clamp(t / (d * 0.85))
-        hx = -2.7 + n * 0.165 + math.sin(t * 9) * 0.01
-        hy = -1.62 + math.sin(t * 13) * 0.02
-        c.drawLine(hx, hy, hx + 0.12, hy - 0.04, P(c=col((240, 238, 230)), stroke=0.04, cap=1))
-        c.drawRoundRect(skia.Rect(hx - 0.05, hy - 0.05, hx + 0.5, hy + 0.17), 0.08, 0.08, P(c=col((196, 168, 146))))
-        c.drawRect(skia.Rect(hx + 0.4, hy - 0.08, hx + 1.4, hy + 0.3), P(c=col((96, 92, 84))))
-        c.drawLine(hx + 0.18, hy + 0.15, hx + 0.48, hy + 0.12, P(c=col((236, 232, 224)), stroke=0.025, cap=1))
-        smoke_puffs(c, t, hx + 0.5, hy + 0.1, n=12, seed=4, a=0.2)
-        for i in range(12):
-            life = (t * 0.6 + i / 12) % 1
-            c.drawCircle(hx + 0.05, hy + life * 0.6, 0.006, P(c=col((240, 240, 236), 0.6 * (1 - life))))
+        blackboard(c, -3, -2.6, 3, -0.6, [eq], size=0.26, start=(1.6, 1.08), reveal=clamp(t / (d * 0.8)))
+        n = len(eq) * clamp(t / (d * 0.8))
+        hx = -1.4 + measure(eq[:int(n)], 13.5, "reg") * 0.26 / 13.5 + math.sin(t * 9) * 0.004
+        hy = -1.58 + math.sin(t * 13) * 0.008
+        c.drawLine(hx, hy, hx + 0.09, hy + 0.06, P(c=col((240, 238, 230)), stroke=0.03, cap=1))
+        c.drawRoundRect(skia.Rect(hx + 0.06, hy + 0.03, hx + 0.3, hy + 0.12), 0.045, 0.045, P(c=col((196, 168, 146))))
+        c.drawRect(skia.Rect(hx + 0.26, hy + 0.0, hx + 0.9, hy + 0.18), P(c=col((96, 92, 84))))
+        c.drawLine(hx + 0.12, hy + 0.1, hx + 0.32, hy + 0.08, P(c=col((236, 232, 224)), stroke=0.016, cap=1))
+        smoke_puffs(c, t, hx + 0.33, hy + 0.06, n=10, seed=4, a=0.16)
+        for i in range(10):
+            life = (t * 0.7 + i / 10) % 1
+            c.drawCircle(hx + 0.02, hy + life * 0.5, 0.004, P(c=col((240, 240, 236), 0.6 * (1 - life))))
     small_tag(c, W, H, "2D RECONSTRUCTION", PAL["warm"])
 
 
@@ -736,7 +739,7 @@ def s31(c, t, d, W, H):
     if have_photo("lawrence_cyclotron_0.jpg"):
         photo_shot(c, t, d, W, H, "lawrence_cyclotron_0.jpg", PAL["warm"], "LAWRENCE BERKELEY NATIONAL LABORATORY", mode="sepia")
         return
-    st = Stage(c, W, H, x=track(t, d, -0.3, 0.3), y=-1.4, z=1.2, f=1500)
+    st = Stage(c, W, H, x=track(t, d, -0.8, 0.8), y=-1.5, z=-0.4, f=1000)
     c.clear(col((24, 26, 28)))
     with st.at(2.4):
         c.drawRect(skia.Rect(-3, -2.4, 3, -0.6), P(c=col((54, 50, 44))))
@@ -762,7 +765,7 @@ def s32(c, t, d, W, H):
         location_card(cc, W, H, [("PUBLISHED 1 SEPTEMBER 1939", 26, "semi", "fg"), ("the day Germany invades Poland", 18, "reg", "accent")],
                       a, PAL["warm"])
     document_shot(c, t, d, W, H, _G["pr39"], PAL["warm"], focus=(0.5, 0.12), highlight=(0.04, 0.2),
-                  tag="RECREATION · PHYS. REV. 56, 455 (1939)")
+                  tag="RECREATION · PHYS. REV. 56, 455 (1939)", shift=0.17)
     flag(c, t)
 
 

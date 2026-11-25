@@ -16,6 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "graphics" / "assets"
 
 
+CLOCK = [0.0]   # global film time, set by the renderer (used for blinking)
+
 # ------------------------------------------------------------------ maths / easing
 def clamp(x, a=0.0, b=1.0):
     return max(a, min(b, x))
@@ -78,21 +80,45 @@ def face(name):
     return _TF[name]
 
 
-def text(canvas, s, x, y, size, fc="med", color=(230, 226, 216), alpha=1.0, track=0.0, align="left"):
+def _fonts(s, size, fc):
     font = skia.Font(face(fc), size)
     font.setSubpixel(True)
     font.setEdging(skia.Font.Edging.kAntiAlias)
-    paint = skia.Paint(AntiAlias=True, Color=col(color, alpha))
-    fonts = [font if font.unicharToGlyph(ord(ch)) or ch == " " else _fallback(ch, size, fc) for ch in s]
+    font.setHinting(skia.FontHinting.kNone)
+    return [font if font.unicharToGlyph(ord(ch)) or ch == " " else _fallback(ch, size, fc) for ch in s]
+
+
+def measure(s, size, fc="med", track=0.0):
+    fonts = _fonts(s, size, fc)
+    return sum(f.measureText(ch) for f, ch in zip(fonts, s)) + track * size * max(0, len(s) - 1)
+
+
+def text(canvas, s, x, y, size, fc="med", color=(230, 226, 216), alpha=1.0, track=0.0, align="left", shadow=0.0, halo=None):
+    """Draw text. shadow: soft drop-shadow strength (0-1); halo: (r,g,b) outline colour for text over maps."""
+    if not s or alpha <= 0.003:
+        return measure(s, size, fc, track) if s else 0
+    fonts = _fonts(s, size, fc)
     ws = [f.measureText(ch) for f, ch in zip(fonts, s)]
     total = sum(ws) + track * size * max(0, len(s) - 1)
     if align == "center":
         x -= total / 2
     elif align == "right":
         x -= total
-    for ch, w, f in zip(s, ws, fonts):
-        canvas.drawString(ch, x, y, f, paint)
-        x += w + track * size
+    passes = []
+    if shadow > 0:
+        sp = skia.Paint(AntiAlias=True, Color=skia.Color(0, 0, 0, int(200 * shadow * alpha)))
+        sp.setMaskFilter(skia.MaskFilter.MakeBlur(skia.kNormal_BlurStyle, max(1.0, size * 0.12)))
+        passes.append((sp, size * 0.04))
+    if halo is not None:
+        hp = skia.Paint(AntiAlias=True, Color=col(halo, 0.85 * alpha), Style=skia.Paint.kStroke_Style, StrokeWidth=max(1.5, size * 0.16))
+        hp.setStrokeJoin(skia.Paint.kRound_Join)
+        passes.append((hp, 0.0))
+    passes.append((skia.Paint(AntiAlias=True, Color=col(color, alpha)), 0.0))
+    for paint, off in passes:
+        xx = x
+        for ch, w, f in zip(s, ws, fonts):
+            canvas.drawString(ch, xx + off, y + off, f, paint)
+            xx += w + track * size
     return total
 
 
@@ -337,7 +363,10 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
                  (0.06, 0.1), (0.02, 0.11), (-0.04, 0.08), (-0.08, 0.03)])
     canvas.drawPath(head, P(c=col(C(L.skin))))
     canvas.drawCircle(-0.01, 0.0, 0.022, P(c=col(C(mix(L.skin, (0, 0, 0), 0.18)))))  # ear
-    canvas.drawCircle(0.05, -0.025, 0.009, P(c=col(C((30, 34, 40)))))                   # eye
+    if ((CLOCK[0] * 0.23 + abs(x) * 0.37 + L.height) % 1.0) < 0.03:                        # blink
+        canvas.drawLine(0.04, -0.025, 0.06, -0.025, P(c=col(C((30, 34, 40))), stroke=0.006))
+    else:
+        canvas.drawCircle(0.05, -0.025, 0.009, P(c=col(C((30, 34, 40)))))                   # eye
     if L.moustache:
         canvas.drawPath(poly([(0.06, 0.045), (0.095, 0.045), (0.09, 0.058), (0.06, 0.056)]), P(c=col(C(L.hair))))
     # hair

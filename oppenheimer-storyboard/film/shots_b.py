@@ -12,6 +12,13 @@ from reg import shot, Stage, track
 from shots_a import mv, ping, globe_scene, smoke_puffs, _G
 import style_test
 
+
+def _st_caption(c, W, H, lines, a):
+    location_card(c, W, H, [(s_, sz, fc, "fg" if i == 0 else "sub") for i, (s_, sz, fc, _) in enumerate(lines)], a, PAL["cold"])
+
+
+style_test.caption = _st_caption
+
 WAR, COLD, DES = PAL["war"], PAL["cold"], PAL["desert"]
 RED = WAR["accent"]
 EUROPE = "+proj=laea +lat_0=52 +lon_0=15 +datum=WGS84"
@@ -122,7 +129,7 @@ def s38(c, t, d, W, H):
         _G["nature"] = journal_page(1300, 1800, "NATURE", "VOL. 143 · FEBRUARY 11, 1939",
                                     ["Disintegration of Uranium by Neutrons:", "a New Type of Nuclear Reaction"],
                                     "LISE MEITNER · O. R. FRISCH", "", cols=2)
-    document_shot(c, t, d, W, H, _G["nature"], WAR, focus=(0.5, 0.12), highlight=(0.08, 0.2), tag="RECREATION · NATURE 143, 239 (1939)")
+    document_shot(c, t, d, W, H, _G["nature"], WAR, focus=(0.5, 0.12), highlight=(0.08, 0.2), tag="RECREATION · NATURE 143, 239 (1939)", shift=0.17)
     location_card(c, W, H, [("11 FEBRUARY 1939", 26, "semi", "fg"), ("Meitner and Frisch explain the process and call it fission", 18, "reg", "accent")],
                   clamp((t - 2.2) / 0.7), WAR)
 
@@ -154,7 +161,7 @@ def s40(c, t, d, W, H):
              "in the immediate future."],
             sign=["Yours very truly,", "A. Einstein", "(Albert Einstein)"])
     document_shot(c, t, d, W, H, _G["einstein"], WAR, focus=(0.5, lerp(0.35, 0.6, t / d)), tone=(40, 34, 30),
-                  tag="RECREATION · ORIGINAL: FDR PRESIDENTIAL LIBRARY")
+                  tag="RECREATION · ORIGINAL: FDR PRESIDENTIAL LIBRARY", shift=0.17)
     location_card(c, W, H, [("EINSTEIN–SZILÁRD LETTER", 26, "semi", "fg"), ("Delivered to Roosevelt on 11 October 1939", 18, "reg", "accent")],
                   clamp((t - 2.6) / 0.7), WAR)
 
@@ -316,7 +323,7 @@ def s50(c, t, d, W, H):
              (-122.26, 37.87, "BERKELEY — RADIATION LAB", 2.2, (14, 18)), (-84.27, 36.01, "OAK RIDGE — URANIUM ENRICHMENT", 3.0, (14, 20)),
              (-119.65, 46.63, "HANFORD — PLUTONIUM PRODUCTION", 3.8, (14, -12)), (-106.3, 35.88, "LOS ALAMOS — WEAPON DESIGN", 4.6, (14, 18))]
     routes = [([(-77.04, 38.9), (lo, la)], clamp((t - t0 - 0.2) / 0.8), COLD["muted"]) for lo, la, _, t0, _ in sites[1:]]
-    mat, mpx = draw_map(c, W, H, m, (-96, 38.5), track(t, d, 5600, 5000), COLD, grat=10, routes=routes,
+    mat, mpx = draw_map(c, W, H, m, (-96, 36.4), track(t, d, 5600, 5000), COLD, grat=10, routes=routes,
                         markers=[(lo, la, name, ping(t, t0), "key" if "LOS" in name else "dot", off) for lo, la, name, t0, off in sites])
     map_title(c, W, H, COLD, "THE MANHATTAN PROJECT, 1942–1945", "PRINCIPAL SITES", clamp(t / 0.8))
     scale_bar(c, W, H, mpx, COLD)
@@ -473,25 +480,28 @@ def s55(c, t, d, W, H):
 
 @shot(56)
 def s56(c, t, d, W, H):
-    st = Stage(c, W, H, x=track(t, d, -40, 40), y=-30, z=-60, f=1200)
-    sky(c, W, H, (170, 180, 180), (200, 200, 190), horizon=0.3)
-    ground(c, W, H, st.cam, (110, 96, 70), (130, 130, 100))
+    st = Stage(c, W, H, x=track(t, d, -14, 14), y=-7, z=-24, f=1150)
+    sky(c, W, H, (170, 180, 180), (206, 204, 192), horizon=0.45)
+    ground(c, W, H, st.cam, (104, 90, 66), (136, 134, 104))
     with st.at(500):
-        c.drawPath(poly(ridge(np.random.default_rng(6), -1500, 1500, -30, 40, 120, 0.5)), P(c=col((100, 120, 96))))
-    with st.at(160):
-        c.drawRect(skia.Rect(-400, -18, 400, 0), P(c=col((150, 150, 144))))
-        for x in np.arange(-400, 400, 6):
-            c.drawLine(x, -18, x, 0, P(c=col((120, 120, 116)), stroke=0.6))
-        for i, x in enumerate((-120, -20, 90)):
-            c.drawLine(x, 0, x, -60, P(c=col((60, 60, 60)), stroke=1.2))
-            arm = math.sin(t * 0.3 + i) * 10
-            c.drawLine(x, -60, x + 40, -60 + arm * 0.2, P(c=col((60, 60, 60)), stroke=1.0))
-            c.drawLine(x + 30, -60, x + 30, -30, P(c=col((60, 60, 60)), stroke=0.3))
-    with st.at(60):
-        for i in range(12):
-            car_1940(c, -120 + ((t * 8 + i * 25) % 260), (80, 84, 60), wheel_t=t)
-        for i in range(30):
-            draw_person(c, SOLDIER if i % 3 == 0 else CREW, walk_pose(t * 5 + i, 0.8), x=-100 + i * 7 + t * 1.2, facing=1)
+        c.drawPath(poly(ridge(np.random.default_rng(6), -1500, 1500, -30, 40, 120, 0.5)), P(c=col((110, 128, 104))))
+    with st.at(90):
+        c.drawRect(skia.Rect(-160, -16, 160, 0), P(c=col((160, 160, 154))))
+        for x in np.arange(-160, 160, 4):
+            c.drawLine(x, -16, x, 0, P(c=col((132, 132, 128)), stroke=0.4))
+        c.drawRect(skia.Rect(-160, -17, 160, -16), P(c=col((120, 120, 116))))
+        for i, x in enumerate((-90, -10, 70)):
+            c.drawLine(x, 0, x, -46, P(c=col((60, 60, 60)), stroke=0.9))
+            arm = math.sin(t * 0.4 + i) * 6
+            c.drawLine(x - 8, -46, x + 30, -46 + arm * 0.2, P(c=col((60, 60, 60)), stroke=0.8))
+            c.drawLine(x + 24, -46 + arm * 0.16, x + 24, -24, P(c=col((60, 60, 60)), stroke=0.25))
+            c.drawRect(skia.Rect(x + 21, -24, x + 27, -22.6), P(c=col((140, 120, 80))))
+    with st.at(26):
+        for i in range(6):
+            car_1940(c, -60 + ((t * 7 + i * 22) % 130), (84, 88, 62), wheel_t=t)
+        for i in range(16):
+            draw_person(c, CREW if i % 3 else SOLDIER, walk_pose(t * 5 + i, 0.8), x=-40 + i * 5 + t * 1.1 * (1 if i % 2 else -1),
+                        facing=1 if i % 2 else -1, z=26)
     card(c, W, H, t, d, COLD, "K-25 PLANT, OAK RIDGE, TENNESSEE", "1944 · URANIUM-235 ENRICHMENT")
     tag2d(c, W, H, COLD)
 
@@ -543,7 +553,7 @@ def s58(c, t, d, W, H):
                 c.drawCircle(x + rng.uniform(-0.3, 0.3) + math.sin(t + x) * 0.03, -0.25, 0.3, P(c=col((120, 120, 90))))
     if inside > 0:
         c.saveLayerAlpha(None, int(255 * inside))
-        st = Stage(c, W, H, x=0, y=track(t, d, -1, -6), z=-2)
+        st = Stage(c, W, H, x=0.6, y=track(t, d, -1.4, -3.4), z=2.4)
         c.clear(col((40, 44, 48)))
         with st.at(8):
             c.drawRect(skia.Rect(-8, -12, 8, 0), P(c=col((110, 112, 110))))
