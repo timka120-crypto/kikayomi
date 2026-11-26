@@ -16,7 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "graphics" / "assets"
 
 
-CLOCK = [0.0]   # global film time, set by the renderer (used for blinking)
+CLOCK = [0.0]
+LIFE = [True]   # global film time, set by the renderer (used for blinking)
 
 # ------------------------------------------------------------------ maths / easing
 def clamp(x, a=0.0, b=1.0):
@@ -276,6 +277,24 @@ def draw_person(canvas, look: Look, pose: Pose, x=0.0, facing=1, shade=0.0, fog_
     """Draw a flat character standing at ground point (x, 0) in the current plane."""
     L = look
     k = L.height / 1.82
+    if LIFE[0] and not getattr(pose, "_still", False):
+        # automatic secondary motion: breathing, weight shift, head and arm drift
+        import copy
+        pose = copy.copy(pose)
+        tt = CLOCK[0]
+        sd = (x * 1.37 + L.height * 7.1 + L.build * 3.3) % 6.283
+        walking = abs(pose.hip_l - pose.hip_r) > 18
+        a = 0.45 if walking else 1.0
+        pose.bob += -0.007 * (0.5 + 0.5 * math.sin(tt * 2.1 + sd)) * a
+        pose.lean += (1.4 * math.sin(tt * 0.9 + sd) + 0.6 * math.sin(tt * 2.1 + sd)) * a
+        pose.head += (3.5 * math.sin(tt * 0.55 + sd * 2) + 1.5 * math.sin(tt * 1.6 + sd)) * a
+        pose.sh_l += 4.0 * math.sin(tt * 0.8 + sd * 3) * a
+        pose.sh_r += 4.5 * math.sin(tt * 0.7 + sd * 1.7) * a
+        pose.el_l += 5.0 * math.sin(tt * 1.1 + sd) * a
+        pose.el_r += 6.0 * math.sin(tt * 0.95 + sd * 2.3) * a
+        if not walking and pose.hip_r < 60:
+            sway = 2.0 * math.sin(tt * 0.45 + sd)
+            pose.hip_l += sway; pose.hip_r += sway * 0.6
     b = L.build
 
     def C(c):

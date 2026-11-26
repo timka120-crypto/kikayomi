@@ -928,8 +928,25 @@ def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=()
     for lat in np.arange(math.floor(b[1] / grat) * grat, b[3] + 1, grat):
         pts = [mv.S(mat, lo, lat) for lo in np.linspace(b[0], b[2], 120)]
         c.drawPath(poly([(p.x(), p.y()) for p in pts], close=False), gp)
+    import engine as _e
+    _tt = _e.CLOCK[0]
+    # sea shimmer: faint drifting swell lines (land is drawn over them)
+    sp = P(c=col((255, 255, 255), 0.035), stroke=1.2 * k)
+    for j in range(int(H / (26 * k)) + 2):
+        yy = j * 26 * k + 6 * k * math.sin(_tt * 0.5 + j)
+        x0 = ((j * 137 * k + _tt * 22 * k) % (180 * k)) - 180 * k
+        while x0 < W:
+            c.drawLine(x0, yy, x0 + 60 * k, yy, sp)
+            x0 += 180 * k
     lp = skia.Path(mv.land); lp.transform(mat)
     c.drawPath(lp, P(c=col(pal["land"], land_a)))
+    # drifting cloud shadows over everything on the map
+    for i in range(7):
+        cxs = ((i * 0.37 + _tt * 0.012) % 1.4 - 0.2) * W
+        cys = (0.15 + (i * 0.29) % 0.8) * H
+        rr = (160 + 90 * (i % 3)) * k
+        c.drawOval(skia.Rect(cxs - rr * 1.6, cys - rr * 0.7, cxs + rr * 1.6, cys + rr * 0.7),
+                   P(c=col((0, 0, 0), 0.07), blur=rr * 0.5))
     for key, colr, a, hatched in fills:
         if a <= 0.01:
             continue
@@ -954,12 +971,19 @@ def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=()
         L = meas.getLength()
         seg = skia.Path()
         meas.getSegment(0, L * clamp(prog), seg, True)
-        rp = P(c=col(colr), stroke=2.4 * k)
-        rp.setPathEffect(skia.DashPathEffect.Make([12 * k, 8 * k], 0))
+        c.drawPath(seg, P(c=col(colr, 0.25), stroke=7 * k, cap=1))
+        rp = P(c=col(colr), stroke=2.6 * k)
+        rp.setPathEffect(skia.DashPathEffect.Make([12 * k, 8 * k], -_tt * 40 * k))
         c.drawPath(seg, rp)
         pos = meas.getPosTan(L * clamp(prog))
         if pos and prog < 1:
-            c.drawCircle(pos[0].x(), pos[0].y(), 5 * k, P(c=col(colr)))
+            px_, py_ = pos[0].x(), pos[0].y()
+            ang = math.degrees(math.atan2(pos[1].y(), pos[1].x()))
+            c.drawCircle(px_, py_, 22 * k, P(c=col(colr, 0.25), blur=10 * k))
+            c.save(); c.translate(px_, py_); c.rotate(ang); c.scale(k * 1.3, k * 1.3)
+            c.drawPath(poly([(14, 0), (4, -2), (-2, -16), (-6, -16), (-3, -2), (-10, -2), (-14, -7), (-16, -7), (-14, 0),
+                             (-16, 7), (-14, 7), (-10, 2), (-3, 2), (-6, 16), (-2, 16), (4, 2)]), P(c=col((250, 246, 236))))
+            c.restore()
     for lon, lat, km, a in rings:
         p = mv.S(mat, lon, lat)
         c.drawCircle(p.x(), p.y(), km * 1000 / m, P(c=col(pal["accent"], a * 0.8), stroke=1.6 * k))
@@ -983,6 +1007,9 @@ def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=()
         c.drawCircle(p.x(), p.y(), r * (0.6 + 0.4 * eout(a)), P(c=col(colr, a)))
         if style in ("key", "target"):
             c.drawCircle(p.x(), p.y(), r * 2.3, P(c=col(colr, a), stroke=1.6 * k))
+            for q in range(2):
+                ph = ((_tt * 0.6 + q * 0.5 + p.x() * 0.001) % 1.0)
+                c.drawCircle(p.x(), p.y(), r * (2.3 + 5 * ph), P(c=col(colr, a * 0.6 * (1 - ph)), stroke=1.4 * k))
         mrects.append((p.x() - r * 1.6, p.y() - r * 1.6, p.x() + r * 1.6, p.y() + r * 1.6))
         if name:
             todo.append((p, name, a, style, off, colr))
@@ -1033,3 +1060,35 @@ def document_shot(c, t, d, W, H, surf, pal, focus=(0.5, 0.3), tag="RECREATION", 
             small_tag(c, W, H, tag, pal)
         return
     _document_shot_v1(c, t, d, W, H, surf, pal, focus, tag, tone, tilt, push, highlight, caption_lines, under)
+
+
+# =====================================================================================
+# v3: overlays (tags, cards, titles, legends) are deferred so the renderer can draw them
+# steady on top of the moving camera and the ambient particle layer.
+DEFER = [False]
+OVL = []
+
+
+def _deferrable(fn):
+    def wrapper(*a, **kw):
+        if DEFER[0]:
+            OVL.append((fn, a, kw))
+        else:
+            fn(*a, **kw)
+    wrapper.__wrapped__ = fn
+    return wrapper
+
+
+small_tag = _deferrable(small_tag)
+location_card = _deferrable(location_card)
+map_title = _deferrable(map_title)
+legend = _deferrable(legend)
+date_counter = _deferrable(date_counter)
+
+
+def flush_overlays(c):
+    items = OVL[:]
+    OVL.clear()
+    for fn, a, kw in items:
+        a = (c,) + tuple(a[1:])
+        fn(*a, **kw)

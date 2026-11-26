@@ -12,10 +12,10 @@ import numpy as np
 import skia
 
 sys.path.insert(0, str(Path(__file__).parent))
-from engine import Grain, vignette, clamp, col, text, Writer  # noqa
-from reg import SHOTS
+from engine import Grain, vignette, clamp, col, text, Writer, lerp  # noqa
+from reg import SHOTS, NO_KINETIC, PARTICLES
 import shots_a  # noqa
-for _m in ("shots_b", "shots_c", "shots_d", "shots_e"):
+for _m in ("shots_b", "shots_c", "shots_d", "shots_e", "v3_a", "v3_b", "v3_c", "v3_d"):
     try:
         __import__(_m)
     except ModuleNotFoundError:
@@ -26,7 +26,7 @@ OUT = ROOT / "renders"
 PARTS = OUT / "parts"
 SB = json.loads((ROOT / "storyboard.json").read_text())
 FPS = 30
-XF = 0.5
+XF = 0.6
 
 
 def secs(tc):
@@ -45,14 +45,104 @@ def placeholder(c, t, d, W, H, shot):
     text(c, shot["see"][:110], 80 * k, 200 * k, 20 * k, "reg", (170, 176, 180), 1)
 
 
+
+
+def kinetic(c, n, u, W, H, typ):
+    """Continuous camera move applied to every shot: slow push plus drift plus a little
+    handheld float on reconstructions, so no frame is ever frozen."""
+    rnd = (n * 2654435761) % 1000 / 1000.0
+    ang = rnd * 6.283
+    zin = (n % 5) != 3
+    s0, s1 = (1.0, 1.065) if zin else (1.065, 1.0)
+    s = lerp(s0, s1, u)
+    dx = math.cos(ang) * 0.014 * W * (u - 0.5)
+    dy = math.sin(ang) * 0.010 * H * (u - 0.5)
+    if typ in ("REC", "MIX"):
+        tt = u * 7.0 + n
+        dx += (math.sin(tt * 1.3) * 0.6 + math.sin(tt * 2.9 + 1) * 0.3) * 0.0018 * W
+        dy += (math.sin(tt * 1.1 + 2) * 0.6 + math.sin(tt * 3.3) * 0.3) * 0.0018 * H
+    c.translate(W / 2 + dx, H / 2 + dy)
+    c.scale(s, s)
+    c.translate(-W / 2, -H / 2)
+
+
+_PCACHE = {}
+
+
+def particles(c, W, H, t, kind, n_seed, a=1.0):
+    if kind == "none":
+        return
+    key = (kind, n_seed % 7)
+    if key not in _PCACHE:
+        rng = np.random.default_rng(100 + n_seed % 7)
+        N = {"dust": 90, "embers": 70, "ash": 120, "snow": 160, "stars": 0, "map": 46}[kind]
+        _PCACHE[key] = (rng.uniform(0, 1, N), rng.uniform(0, 1, N), rng.uniform(0.3, 1, N), rng.uniform(0, 6.28, N))
+    xs, ys, zs, ph = _PCACHE[key]
+    k = H / 1080
+    for x, y, z, p in zip(xs, ys, zs, ph):
+        if kind == "dust":
+            px = (x + t * 0.006 * z + 0.01 * math.sin(t * 0.4 + p)) % 1
+            py = (y - t * 0.004 * z + 0.012 * math.sin(t * 0.3 + p * 2)) % 1
+            r = (1.0 + 2.6 * z) * k
+            al = 0.10 + 0.16 * z * (0.5 + 0.5 * math.sin(t * 0.8 + p))
+            colr = (255, 236, 200)
+        elif kind == "embers":
+            px = (x + 0.02 * math.sin(t * 0.7 + p)) % 1
+            py = (y - t * 0.03 * z) % 1
+            r = (1.0 + 2.0 * z) * k
+            al = 0.25 + 0.35 * z * (0.5 + 0.5 * math.sin(t * 3 + p))
+            colr = (255, 160, 80)
+        elif kind == "ash":
+            px = (x + t * 0.01 * z + 0.015 * math.sin(t * 0.5 + p)) % 1
+            py = (y + t * 0.012 * z) % 1
+            r = (1.2 + 2.4 * z) * k
+            al = 0.12 + 0.2 * z
+            colr = (190, 184, 176)
+        elif kind == "snow":
+            px = (x + t * 0.008 * z + 0.02 * math.sin(t * 0.6 + p)) % 1
+            py = (y + t * 0.05 * z) % 1
+            r = (1.5 + 3.0 * z) * k
+            al = 0.35 + 0.4 * z
+            colr = (240, 244, 248)
+        else:  # map: slow drifting light motes
+            px = (x + t * 0.004 * z) % 1
+            py = (y + 0.01 * math.sin(t * 0.3 + p)) % 1
+            r = (1.0 + 1.6 * z) * k
+            al = 0.05 + 0.08 * z * (0.5 + 0.5 * math.sin(t + p))
+            colr = (230, 220, 190)
+        c.drawCircle(px * W, py * H, r, skia.Paint(AntiAlias=True, Color=col(colr, al * a),
+                                                 MaskFilter=skia.MaskFilter.MakeBlur(skia.kNormal_BlurStyle, r * 0.6)))
+
+
+def default_particles(shot):
+    if shot["n"] in PARTICLES:
+        return PARTICLES[shot["n"]]
+    if shot["type"] in ("REC", "MIX"):
+        return "dust"
+    if shot["type"] == "ARCH":
+        return "dust"
+    return "map"
+
+
 def draw_shot(c, shot, t_local, W, H):
     import kit
     kit.CARD_POS[0] = "tl" if shot["type"] in ("REC", "MIX") else "bl"
     fn = SHOTS.get(shot["n"])
+    span = shot["d"] + 2 * XF
+    u = clamp((t_local + XF) / span)
+    kit.DEFER[0] = True
+    kit.OVL.clear()
+    c.save()
+    if shot["n"] not in NO_KINETIC:
+        kinetic(c, shot["n"], u, W, H, shot["type"])
     if fn is None:
         placeholder(c, t_local, shot["d"], W, H, shot)
     else:
         fn(c, max(0.0, t_local), shot["d"], W, H)
+    c.restore()
+    kit.DEFER[0] = False
+    particles(c, W, H, t_local + shot["n"] * 3.1, default_particles(shot), shot["n"])
+    kit.flush_overlays(c)
 
 
 class Film:
@@ -68,19 +158,20 @@ class Film:
         c, W, H = self.c, self.W, self.H
         i = next(j for j, s in enumerate(TL) if s["t0"] <= t < s["t0"] + s["d"] or j == len(TL) - 1)
         cur = TL[i]
-        local = t - cur["t0"]
+        # every shot's clock starts XF early, so the incoming shot is already moving during the
+        # dissolve and simply continues afterwards (no frozen frames at cuts)
+        local = t - cur["t0"] + (XF if i > 0 else 0.0)
         draw_shot(c, cur, local, W, H)
-        # dissolve into the next shot during the last XF seconds
         if i + 1 < len(TL):
             nxt = TL[i + 1]
             rem = cur["t0"] + cur["d"] - t
             if rem < XF:
                 a = 1 - rem / XF
                 c.saveLayerAlpha(None, int(255 * a * a * (3 - 2 * a)))
-                draw_shot(c, nxt, 0.0, W, H)
+                draw_shot(c, nxt, XF - rem, W, H)
                 c.restore()
         vignette(c, W, H, 110)
-        self.grain.apply(c, t, 0.06)
+        self.grain.apply(c, t, 0.05)
         if t < 1.0:
             c.drawRect(skia.Rect(0, 0, W, H), skia.Paint(Color=skia.Color(0, 0, 0, int(255 * (1 - t)))))
         if t > DUR - 1.5:

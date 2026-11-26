@@ -5,6 +5,8 @@ from contextlib import contextmanager
 from engine import Cam, clamp, lerp, ease
 
 SHOTS = {}
+NO_KINETIC = set()      # shots that manage their own full camera
+PARTICLES = {}          # per-shot ambient layer: dust, embers, ash, snow, map, none
 
 
 def shot(n):
@@ -29,5 +31,11 @@ class Stage:
             self.c.restore()
 
 
-def track(t, d, a, b, fn=ease):
+def cruise(x):
+    """Mostly constant-velocity move with soft ends: camera never comes to a dead stop."""
+    x = clamp(x)
+    return 0.7 * x + 0.3 * ease(x)
+
+
+def track(t, d, a, b, fn=cruise):
     return lerp(a, b, fn(t / d))
