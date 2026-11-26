@@ -254,3 +254,61 @@ def v147(c, t, d, W, H):
             a = clamp(min((y - H * 0.08) / (H * 0.12), (H * 0.95 - y) / (H * 0.1)))
             text(c, s_, W / 2, y, sz * k, fc, colr, a, align="center", track=0.08 if fc == "semi" else 0.0, shadow=0.8)
         y += (sz + 26) * k
+
+
+# ------------------------------------------------------------------ 142: Trinity obelisk at dusk, wind and birds
+@shot(142)
+def v142(c, t, d, W, H):
+    k = K(H)
+    st = Stage(c, W, H, x=track(t, d, -1.4, -0.4), y=-1.6, z=track(t, d, -7.0, -4.6))
+    sun = t / d
+    sky(c, W, H, mix((24, 34, 66), (16, 22, 46), sun), mix((236, 150, 100), (190, 100, 80), sun))
+    # sinking sun disc behind the ridge
+    sx, sy = W * 0.8, H * (0.36 + 0.05 * sun)
+    c.drawCircle(sx, sy, 160 * k, P(c=col((255, 190, 120), 0.25), blur=60 * k))
+    c.drawCircle(sx, sy, 34 * k, P(c=col((255, 214, 160), 0.9)))
+    # drifting clouds
+    rng = np.random.default_rng(4)
+    for i in range(7):
+        x = (rng.uniform(0, W * 1.4) + t * 18 * k * (1 + i % 3)) % (W * 1.4) - W * 0.2
+        y = H * rng.uniform(0.08, 0.36)
+        r = rng.uniform(80, 180) * k
+        c.drawOval(skia.Rect(x - r * 2, y - r * 0.25, x + r * 2, y + r * 0.25), P(c=col((255, 170, 130), 0.25), blur=r * 0.2))
+    ground(c, W, H, st.cam, (60, 50, 50), (110, 80, 70))
+    with st.at(600):
+        c.drawPath(poly(ridge(np.random.default_rng(12), -1600, 1600, -26, 40, 140, 0.55)), P(c=col((40, 34, 50))))
+    with st.at(6):
+        c.drawPath(poly([(-0.9, 0), (-0.6, -3.6), (0, -3.9), (0.6, -3.6), (0.9, 0)]), P(c=col((30, 28, 30))))
+        c.drawPath(poly([(0.25, 0), (0.45, -3.6), (0, -3.9), (0.6, -3.6), (0.9, 0)]), P(c=col((255, 170, 120), 0.12)))
+        c.drawRect(skia.Rect(-0.35, -2.2, 0.35, -1.7), P(c=col((90, 80, 60))))
+        c.drawLine(-12, -1.0, 12, -1.0, P(c=col((30, 30, 30), 0.6), stroke=0.01))
+        # ravens circling high above
+        for i in range(3):
+            a = t * 0.6 + i * 2.1
+            bx, by = math.cos(a) * 4 + i, -7 - math.sin(a) * 1.2
+            fl = math.sin(t * 9 + i) * 0.12
+            c.drawPath(poly([(bx - 0.25, by - fl), (bx, by), (bx + 0.25, by - fl)], close=False), P(c=col((20, 16, 20)), stroke=0.05, cap=1))
+    # tumbleweeds rolling through on the wind
+    with st.at(3.5):
+        for i in range(3):
+            x = -9 + ((t * (2.2 + i * 0.6) + i * 5) % 18)
+            r = 0.22 + 0.08 * i
+            y = -r - abs(math.sin(t * 4 + i)) * 0.25
+            c.save(); c.translate(x, y); c.rotate(t * 300 + i * 50)
+            for j in range(9):
+                c.drawCircle(math.cos(j) * r * 0.4, math.sin(j * 1.7) * r * 0.4, r * 0.7, P(c=col((90, 70, 54), 0.9), stroke=0.025))
+            c.restore()
+    with st.at(-1.5):
+        rng = np.random.default_rng(21)
+        for i in range(70):
+            x = rng.uniform(-9, 9)
+            h = rng.uniform(0.15, 0.5)
+            sway = math.sin(t * 2.6 + x * 1.7) * 0.06 * h / 0.3
+            for j in range(3):
+                dx = (j - 1) * 0.03
+                c.drawLine(x + dx, 0, x + dx * 3 + sway, -h * (0.8 + 0.2 * j), P(c=col((54, 44, 38)), stroke=0.012, cap=1))
+    shots_b.card(c, W, H, t, d, DARK, "TRINITY SITE GROUND ZERO MONUMENT", "ERECTED 1965 · TODAY")
+    small_tag(c, W, H, "2D ILLUSTRATION · PRESENT DAY", DARK)
+
+
+PARTICLES[142] = "dust"

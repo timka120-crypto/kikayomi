@@ -37,11 +37,17 @@ def sky_air(c, W, H, t, top=(70, 96, 130), bot=(190, 200, 206), clouds_y=0.72, s
     rng = np.random.default_rng(seed)
     for layer in range(3):
         y = H * (clouds_y + layer * 0.08)
-        sp = (40 + layer * 60) * k * speed
+        sp = (120 + layer * 170) * k * speed
         for i in range(18):
             x = (rng.uniform(0, W * 1.4) - t * sp) % (W * 1.4) - W * 0.2
             r = rng.uniform(40, 110) * k * (1 + layer * 0.4)
             c.drawOval(skia.Rect(x - r * 1.8, y - r * 0.35, x + r * 1.8, y + r * 0.35), P(c=col((236, 238, 240), 0.55 + layer * 0.12), blur=r * 0.2))
+    # high thin cirrus drifting the other way for parallax
+    for i in range(8):
+        x = (rng.uniform(0, W * 1.6) - t * 30 * k * speed) % (W * 1.6) - W * 0.3
+        y = H * rng.uniform(0.08, 0.4)
+        r = rng.uniform(120, 260) * k
+        c.drawOval(skia.Rect(x - r * 2.2, y - r * 0.08, x + r * 2.2, y + r * 0.08), P(c=col((240, 244, 248), 0.18), blur=r * 0.15))
 
 
 def little_boy(c, x, y, s=1.0, colr=(70, 74, 66)):
