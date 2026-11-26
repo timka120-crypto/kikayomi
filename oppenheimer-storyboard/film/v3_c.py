@@ -312,3 +312,143 @@ def v142(c, t, d, W, H):
 
 
 PARTICLES[142] = "dust"
+
+
+# ------------------------------------------------------------------ 129: arms race with a flash for every first test
+@shot(129)
+def v129(c, t, d, W, H):
+    k = K(H)
+    m = shots_c.mv("world", "+proj=robin +datum=WGS84", (-180, -60, 180, 85))
+    tests = [(-106.48, 33.68, "USA 1945", 0.4), (77.82, 50.44, "USSR 1949", 1.4), (115.55, -20.4, "UK 1952", 2.4),
+             (162.19, 11.67, "USA 1952 · H-BOMB", 3.2), (0.06, 26.31, "FRANCE 1960", 4.4), (89.8, 40.82, "CHINA 1964", 5.6)]
+    mat, mpx = draw_map(c, W, H, m, (track(t, d, 20, 50), 22), track(t, d, 38000, 30000), CW, grat=30,
+                        markers=[(lo, la, name, shots_c.ping(t, t0), "key", (12, -10)) for lo, la, name, t0 in tests])
+    for lo, la, name, t0 in tests:
+        v = t - t0
+        if v < 0:
+            continue
+        p = m.S(mat, lo, la)
+        r = (30 + 260 * eout(clamp(v / 1.5))) * k
+        c.drawCircle(p.x(), p.y(), r, P(c=col((255, 214, 150), 0.7 * math.exp(-v * 1.6)), stroke=4 * k))
+        c.drawCircle(p.x(), p.y(), 60 * k, skia.Paint(AntiAlias=True, Shader=skia.GradientShader.MakeRadial(
+            (p.x(), p.y()), 60 * k, [col((255, 240, 200), 0.9 * math.exp(-v * 2.5)), col((255, 200, 120), 0)])))
+    n = sum(1 for lo, la, name, t0 in tests if t >= t0 and "H-BOMB" not in name)
+    # running bar of nuclear-armed states
+    bx, by = W - 380 * k, H - 120 * k
+    for i in range(5):
+        on = i < n
+        c.drawRect(skia.Rect(bx + i * 62 * k, by, bx + i * 62 * k + 48 * k, by + 20 * k), P(c=col(CW["accent"] if on else (60, 70, 80), 0.95 if on else 0.5)))
+    text(c, f"NUCLEAR-ARMED STATES: {n}", W - 64 * k, by - 18 * k, 24 * k, "monom", CW["accent"], 1, align="right", shadow=0.8)
+    map_title(c, W, H, CW, "THE NUCLEAR ARMS RACE, 1945–1964", "FIRST TESTS BY EACH NUCLEAR POWER", clamp(t / 0.8))
+    small_tag(c, W, H, "GRAPHICS · NATURAL EARTH", CW)
+
+
+# ------------------------------------------------------------------ 106 (v2): bombsight over a readable delta with the T-bridge
+def _delta_ground(c, W, H, ox, oy, s, t, k):
+    """Stylised plan view of the Ota delta: seven river channels fanning south to the bay, city blocks,
+    and the T-shaped Aioi Bridge at the origin. Units: 1 = ~1 km, scaled by s px."""
+    c.save(); c.translate(ox, oy); c.scale(s, s)
+    c.drawRect(skia.Rect(-12, -12, 12, 12), P(c=col((120, 124, 106))))
+    rng = np.random.default_rng(7)
+    for i in range(900):
+        x, y = rng.uniform(-11, 11), rng.uniform(-11, 9)
+        c.drawRect(skia.Rect(x, y, x + rng.uniform(0.08, 0.22), y + rng.uniform(0.06, 0.16)), P(c=col(mix((150, 146, 132), (96, 98, 86), rng.uniform()), 0.8)))
+    c.drawRect(skia.Rect(-12, 6.5, 12, 12), P(c=col((84, 104, 116))))
+    river = P(c=col((96, 118, 128)), stroke=0.32, cap=1)
+    for x0, x1 in ((-0.2, -4.5), (-0.2, -2.0), (0.0, 0.2), (0.15, 2.0), (0.2, 3.6), (0.3, 5.4)):
+        path = skia.Path(); path.moveTo(0, -11); path.lineTo(0, -1.5)
+        path.cubicTo(x0, 0.5, x1 * 0.6, 3, x1, 6.8)
+        c.drawPath(path, river)
+    # Aioi Bridge: the T where the river forks
+    c.drawLine(-0.7, 0.0, 0.7, 0.0, P(c=col((200, 196, 184)), stroke=0.09))
+    c.drawLine(0.0, 0.0, 0.0, 0.5, P(c=col((200, 196, 184)), stroke=0.09))
+    c.restore()
+
+
+@shot(106)
+def v106b(c, t, d, W, H):
+    k = K(H)
+    u = t / d
+    R = H * 0.42
+    c.clear(col((0, 0, 0)))
+    c.save()
+    path = skia.Path(); path.addCircle(W / 2, H / 2, R)
+    c.clipPath(path, doAntiAlias=True)
+    s = lerp(70, 110, u) * k
+    jit = (math.sin(t * 13) * 2 * k, math.cos(t * 11) * 2 * k)
+    ox = W / 2 + lerp(-1.2, 0.0, u) * s + jit[0]
+    oy = H / 2 + lerp(-5.5, 0.0, u) * s + jit[1]
+    _delta_ground(c, W, H, ox, oy, s, t, k)
+    rng = np.random.default_rng(3)
+    for i in range(10):
+        y = (rng.uniform(0, H * 1.5) + t * 260 * k) % (H * 1.5) - H * 0.25
+        x = rng.uniform(W * 0.3, W * 0.7)
+        r = rng.uniform(60, 140) * k
+        c.drawOval(skia.Rect(x - r, y - r * 0.6, x + r, y + r * 0.6), P(c=col((240, 242, 244), 0.55), blur=r * 0.4))
+    c.restore()
+    c.drawCircle(W / 2, H / 2, R, P(c=col((0, 0, 0)), stroke=12 * k))
+    c.drawCircle(W / 2, H / 2, R * 1.05, P(c=col((0, 0, 0), 0.8), blur=30 * k, stroke=40 * k))
+    cp = P(c=col((20, 20, 20), 0.9), stroke=1.8 * k)
+    c.drawLine(W / 2 - R, H / 2, W / 2 + R, H / 2, cp)
+    c.drawLine(W / 2, H / 2 - R, W / 2, H / 2 + R, cp)
+    for i in range(1, 8):
+        r = i * R / 8
+        c.drawLine(W / 2 - 8 * k, H / 2 + r, W / 2 + 8 * k, H / 2 + r, cp)
+        c.drawLine(W / 2 + r, H / 2 - 8 * k, W / 2 + r, H / 2 + 8 * k, cp)
+    mono_layer(c, W, H, 0.5)
+    text(c, "AIMING POINT: AIOI BRIDGE", W / 2 + R * 1.1, H * 0.84, 18 * k, "mono", MONO["fg"], clamp((t - 0.4) / 0.6), track=0.1, shadow=0.8)
+    text(c, f"8:14:{int(25 + u * 30):02d} AM", W / 2 + R * 1.1, H * 0.84 + 32 * k, 24 * k, "monom",
+         MONO["accent"], clamp((t - 0.4) / 0.6), track=0.06, shadow=0.8)
+    small_tag(c, W, H, "2D RECONSTRUCTION", MONO)
+
+
+NO_KINETIC.add(106)
+
+
+def _inset(c, W, H, n, tsrc, px, py, x, y, w, h, a, k, label=None):
+    if a <= 0.01:
+        return
+    c.drawLine(px, py, x + (0 if x > px else w), y + h / 2, P(c=col((236, 228, 210), 0.7 * a), stroke=1.6 * k))
+    img = live(n, tsrc, w, h)
+    panel(c, img, x, y + (1 - eout(a)) * 30 * k, w, h, a=a, k=k, border=5 * k)
+    if label:
+        text(c, label, x, y + h + 34 * k, 18 * k, "semi", LIGHT, a, track=0.1, shadow=0.8)
+
+
+# ------------------------------------------------------------------ 92: Marianas, with North Field coming alive
+@shot(92)
+def v92(c, t, d, W, H):
+    k = K(H)
+    m = shots_c.mv("pac", "+proj=lcc +lat_1=12 +lat_2=30 +lat_0=22 +lon_0=140 +datum=WGS84", (120, 5, 160, 40), "land-10m.json")
+    z = ease((t - 0.3) / 3.6)
+    ping = shots_c.ping
+    mat, mpx = draw_map(c, W, H, m, (lerp(140, 145.4, z), lerp(22, 15.0, z)), math.exp(lerp(math.log(4200), math.log(300), z)), MONO, grat=5,
+                        markers=[(144.79, 13.44, "GUAM", ping(t, 1.0), "dot", (12, 4)), (145.75, 15.18, "SAIPAN", ping(t, 1.0), "dot", (12, -8)),
+                                 (145.63, 14.99, "TINIAN", ping(t, 2.6), "key", (-14, 16)), (141.32, 24.78, "IWO JIMA", ping(t, 0.6) * (1 - z), "dot", (12, -8)),
+                                 (135.5, 34.7, "JAPAN", (1 - z), "dot", (12, -8))],
+                        routes=[([(145.63, 14.99), (141.32, 24.78), (135.5, 34.7)], clamp(t / 2.4) * (1 - z) + 0.0, (150, 150, 150))])
+    p = m.S(mat, 145.63, 14.99)
+    _inset(c, W, H, 94, 1.0 + t, p.x(), p.y(), W * 0.6, H * 0.2, 560 * k, 315 * k, clamp((t - 3.2) / 0.7), k,
+           label="NORTH FIELD, TINIAN · AUGUST 1945")
+    location_card(c, W, H, [("TINIAN, NORTHERN MARIANA ISLANDS", 26, "semi", "fg"), ("NORTH FIELD · 509th COMPOSITE GROUP", 16, "mono", "fg"),
+                            ("26 July 1945 — USS Indianapolis delivers Little Boy components", 16, "reg", "accent")], clamp((t - 3.8) / 0.8), MONO)
+    small_tag(c, W, H, "GRAPHICS · NATURAL EARTH", MONO)
+
+
+# ------------------------------------------------------------------ 120: both cities, with the two clouds
+@shot(120)
+def v120(c, t, d, W, H):
+    k = K(H)
+    m = shots_c.mv("jp", shots_c.JAPAN, (125, 28, 146, 46))
+    HI, NA = shots_c.HIRO, shots_c.NAGA
+    mat, mpx = draw_map(c, W, H, m, (track(t, d, 131.0, 131.4), track(t, d, 33.4, 33.7)), track(t, d, 1250, 1050), MONO, grat=2,
+                        markers=[(HI[0], HI[1], "HIROSHIMA", 1.0, "target", (14, -12)), (NA[0], NA[1], "NAGASAKI", 1.0, "target", (-14, 18))])
+    ph, pn = m.S(mat, *HI), m.S(mat, *NA)
+    pw, phh = 420 * k, 236 * k
+    _inset(c, W, H, 110, 1.0 + t, ph.x(), ph.y(), W - pw - 90 * k, H * 0.16, pw, phh, clamp((t - 0.6) / 0.7), k)
+    _inset(c, W, H, 118, 1.0 + t, pn.x(), pn.y(), 90 * k, H * 0.2, pw, phh, clamp((t - 1.4) / 0.7), k)
+    legend(c, W, H, [(MONO["accent"], "HIROSHIMA — 6 AUG 1945 — 8:15 AM — 'LITTLE BOY' (uranium, gun-type)", "dot"),
+                     (MONO["accent"], "NAGASAKI — 9 AUG 1945 — 11:02 AM — 'FAT MAN' (plutonium, implosion)", "dot")],
+           MONO, clamp((t - 2.0) / 0.8), y=H * 0.84)
+    map_title(c, W, H, MONO, "THE TWO ATOMIC BOMBINGS", "AUGUST 1945", clamp(t / 0.8))
+    small_tag(c, W, H, "GRAPHICS · NATURAL EARTH · ARCHIVAL INSETS", MONO)

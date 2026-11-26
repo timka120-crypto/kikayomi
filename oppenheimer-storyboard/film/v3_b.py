@@ -285,7 +285,7 @@ NO_KINETIC.add(54)
 @shot(55)
 def v55(c, t, d, W, H):
     k = K(H)
-    live_bg(c, 52, 7.0 + t, W, H, blur=0, dark=0.35, sat=0.8)
+    live_bg(c, 53, 1.0 + t, W, H, blur=0, dark=0.3, sat=0.85)
     c.drawRect(skia.Rect(0, 0, W, H), skia.Paint(Shader=skia.GradientShader.MakeLinear(
         [(0, 0), (0, H * 0.6)], [col((0, 0, 0), 0.55), col((0, 0, 0), 0.0)])))
     # flip clock: 3:24:5x -> 3:25 PM

@@ -931,7 +931,7 @@ def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=()
     import engine as _e
     _tt = _e.CLOCK[0]
     # sea shimmer: faint drifting swell lines (land is drawn over them)
-    sp = P(c=col((255, 255, 255), 0.035), stroke=1.2 * k)
+    sp = P(c=col((255, 255, 255), 0.055), stroke=1.2 * k)
     for j in range(int(H / (26 * k)) + 2):
         yy = j * 26 * k + 6 * k * math.sin(_tt * 0.5 + j)
         x0 = ((j * 137 * k + _tt * 22 * k) % (180 * k)) - 180 * k
@@ -945,8 +945,9 @@ def draw_map(c, W, H, mv, center, width_km, pal, fills=(), markers=(), labels=()
         cxs = ((i * 0.37 + _tt * 0.012) % 1.4 - 0.2) * W
         cys = (0.15 + (i * 0.29) % 0.8) * H
         rr = (160 + 90 * (i % 3)) * k
+        dark_map = sum(pal["sea"]) / 3 < 60
         c.drawOval(skia.Rect(cxs - rr * 1.6, cys - rr * 0.7, cxs + rr * 1.6, cys + rr * 0.7),
-                   P(c=col((0, 0, 0), 0.07), blur=rr * 0.5))
+                   P(c=col((200, 210, 220), 0.045) if dark_map else col((0, 0, 0), 0.07), blur=rr * 0.5))
     for key, colr, a, hatched in fills:
         if a <= 0.01:
             continue
